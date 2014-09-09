@@ -1,0 +1,4 @@
+reset
+rm bamboo
+g++ -o bamboo -O3 main.cpp bamboo.cpp -fopenmp -L/data/zhangh12/boost/lib -lboost_serialization
+
