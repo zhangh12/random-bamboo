@@ -126,6 +126,8 @@
 //     September 9, 2014                                         //
 //     (1) Load specified model and testing data                 //
 //     (2) Modify prediction method                              //
+//     (3) Interface extended. Saved model can be used directly  //
+//         in prediction                                         //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 
@@ -359,10 +361,17 @@ int main(int argc, char **argv){
 		class_weight = 1.0;
 	}
 	
-	BAMBOO bb(file, out, cont, cate, pred, ntree, mtry, max_nleaf, min_leaf_size, imp_measure, seed, 
-	nthread, class_weight, cutoff, flip, output_prox, output_imp, output_bamboo, balance, trace);
-	bb.GrowForest();
-	bb.PredictFromBamboo();
+	if(!file_spec && pred_spec){
+		BAMBOO bb(out, pred, model);
+		bb.GrowForest();
+		bb.PredictFromBamboo();
+	}else{
+		BAMBOO bb(file, out, cont, cate, pred, ntree, mtry, max_nleaf, min_leaf_size, imp_measure, seed, 
+		nthread, class_weight, cutoff, flip, output_prox, output_imp, output_bamboo, balance, trace);
+		bb.GrowForest();
+		bb.PredictFromBamboo();
+	}
+	
 	
 	return 0;
 	

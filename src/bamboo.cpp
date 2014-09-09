@@ -925,14 +925,49 @@ void BAMBOO::LoadTrainingData(){
 
 
 BAMBOO::BAMBOO(const char *const input_path_out, const char *const input_path_test, 
-	const char *const input_path_bamboo){
+	const char *const input_path_bam){
 	
 	time_t start_time;
 	time(&start_time);
 	cout << "Program started: " << ctime(&start_time);
 	cout << "Random Bamboo is loading model ..." << endl;
 	
+	has_test = true;
 	
+	path_fam_test = new char[strlen(input_path_test)+5];
+	path_bim_test = new char[strlen(input_path_test)+5];
+	path_bed_test = new char[strlen(input_path_test)+5];
+	path_pred = new char[strlen(input_path_out)+5];
+	path_fam_test[0] = '\0';
+	path_bim_test[0] = '\0';
+	path_bed_test[0] = '\0';
+	path_pred[0] = '\0';
+	strcat(path_fam_test, input_path_test);
+	strcat(path_bim_test, input_path_test);
+	strcat(path_bed_test, input_path_test);
+	strcat(path_pred, input_path_out);
+	strcat(path_fam_test, ".fam");
+	strcat(path_bim_test, ".bim");
+	strcat(path_bed_test, ".bed");
+	strcat(path_pred, ".prd");
+	
+	path_bam = new char[strlen(input_path_bam)+5];
+	path_bam[0] = '\0';
+	strcat(path_bam, input_path_bam);
+	strcat(path_bam, ".bam");
+	
+	path_cont_test = new char[strlen(input_path_test)+5];
+	path_cont_test[0] = '\0';
+	strcat(path_cont_test, input_path_test);
+	strcat(path_cont_test, ".con");
+	
+	path_cate_test = new char[strlen(input_path_test)+5];
+	path_cate_test[0] = '\0';
+	strcat(path_cate_test, input_path_test);
+	strcat(path_cate_test, ".cat");
+	
+	pred_from_trained_model = false;
+	pred_from_specified_model = true;
 	
 }
 
@@ -2480,6 +2515,16 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 		pointer_leaf.push_back(pchild1);
 		pointer_leaf.push_back(pchild2);
 		
+		
+		//save memory?
+//		if(!(node.sample_id64.empty())){
+//			vector<bitvec >().swap(node.sample_id64);
+//		}
+//		
+//		if(!(node.sample_id.empty())){
+//			vector<int>().swap(node.sample_id);
+//		}
+		
 	}
 	
 	//discard duplicated var ids used by this tree
@@ -2987,6 +3032,10 @@ void BAMBOO::SaveBamboo(){
 
 void BAMBOO::GrowForest(){
 	
+	if(pred_from_specified_model){
+		return;
+	}
+	
 	time_t start, end;
 	start = time(NULL);
 	
@@ -3034,6 +3083,10 @@ void BAMBOO::LoadBamboo(){
 		ar & cont_var_used_in_forest & cont_var_id_used_in_forest;
 		ar & cate_var_used_in_forest & cate_var_id_used_in_forest;
 		ar & bamboo;
+		
+		has_cont = cont_var_used_in_forest.size() ? true : false;
+		has_cate = cate_var_used_in_forest.size() ? true : false;
+		
 		cout << "The bamboo is engaged from [ " << path_bam << " ] for prediction" << endl;
 	}else{
 		cout << "Error: Cannot load bamboo for prediction" << endl;
@@ -3079,7 +3132,7 @@ void BAMBOO::LoadTestingData(){
 	vector<int> cont_col;
 	int nsub_cont = 0;
 	
-	if(cont_var_used_in_forest.size() > 0){
+	if(has_cont){
 		ifstream file_cont(path_cont_test);
 		if(!file_cont){
 			cout << "Error: Cannot open CON file " << path_cont_test << " for predicton" << endl;
@@ -3155,7 +3208,7 @@ void BAMBOO::LoadTestingData(){
 	vector<int> cate_col;
 	int nsub_cate = 0;
 	
-	if(cate_var_used_in_forest.size() > 0){
+	if(has_cate){
 		ifstream file_cate(path_cate_test);
 		if(!file_cate){
 			cout << "Error: Cannot find " << path_cate_test << endl;
@@ -3229,11 +3282,11 @@ void BAMBOO::LoadTestingData(){
 	vector<int> index_individual_id_cate_inc;
 	individual_id_test.clear();
 	
-	if(cont_var_used_in_forest.size() == 0 && cate_var_used_in_forest.size() == 0){
+	if(!has_cont && !has_cate){
 		individual_id_test = individual_id_fam;
 		index_individual_id_fam_inc = index_individual_id_fam;
 	}else{
-		if(cate_var_used_in_forest.size() == 0){
+		if(!has_cate){
 			string str;
 			for(int i = 0; i < individual_id_fam.size(); ++i){
 				str = individual_id_fam[i];
@@ -3246,7 +3299,7 @@ void BAMBOO::LoadTestingData(){
 					}
 				}
 			}
-		}else if(cont_var_used_in_forest.size() == 0){
+		}else if(!has_cont){
 			string str;
 			for(int i = 0; i < individual_id_fam.size(); ++i){
 				str = individual_id_fam[i];
