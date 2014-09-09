@@ -1,3 +1,0 @@
-plink --file train --out train --make-bed --noweb
-plink --file test --out test --make-bed --noweb
-

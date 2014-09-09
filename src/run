@@ -1,2 +1,4 @@
+plink --file train --out train --make-bed --noweb
+plink --file test --out test --make-bed --noweb
 bamboo --file train --out rb --mtry 5000 --ntree 10000 --nthread 16 --seed 1
 
