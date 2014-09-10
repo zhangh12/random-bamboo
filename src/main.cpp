@@ -129,6 +129,8 @@
 //     (3) Interface extended. Saved model can be used directly  //
 //         in prediction                                         //
 //     (4) Add progress bar                                      //
+//     (5) The names of variables are removed from NODE to save  //
+//         memory. One the variables' IDs are saved in NODE      //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 

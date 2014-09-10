@@ -53,6 +53,7 @@ namespace serialization {
 class access;
 }
 }
+
 class NODE{
 	
 	public: 
@@ -66,17 +67,17 @@ class NODE{
 	int leaf_id; //id of the node, if it is a leaf_id
 	int tree_id;
 	
-	string split_snp;
+	//string split_snp;
 	int split_snp_id; // the index of the snp indicator finally chosen to split the node.
 	int split_snp_left_val; // subjects with SNP <= split_snp_left_val will fall into left. Range: 0, 1
 	
-	string split_cont;
+	//string split_cont;
 	int split_cont_id;
 	int split_cont_lower;
 	int split_cont_upper;
 	double split_cont_thr;
 	
-	string split_cate;
+	//string split_cate;
 	int split_cate_id;
 	vector<int> split_cate_left_code;
 	vector<int> split_cate_right_code;
@@ -205,15 +206,15 @@ class NODE{
 		leaf_id = node.leaf_id;
 		tree_id = node.tree_id;
 		
-		split_snp = node.split_snp;
+		//split_snp = node.split_snp;
 		split_snp_id = node.split_snp_id;
 		split_snp_left_val = node.split_snp_left_val;
 		
-		split_cont = node.split_cont;
+		//split_cont = node.split_cont;
 		split_cont_id = node.split_cont_id;
 		split_cont_thr = node.split_cont_thr;
 		
-		split_cate = node.split_cate;
+		//split_cate = node.split_cate;
 		split_cate_id = node.split_cate_id;
 		split_cate_left_string = node.split_cate_left_string;
 		split_cate_right_string = node.split_cate_right_string;
@@ -248,15 +249,15 @@ class NODE{
 		leaf_id = node.leaf_id;
 		tree_id = node.tree_id;
 		
-		split_snp = node.split_snp;
+		//split_snp = node.split_snp;
 		split_snp_id = node.split_snp_id;
 		split_snp_left_val = node.split_snp_left_val;
 		
-		split_cont = node.split_cont;
+		//split_cont = node.split_cont;
 		split_cont_id = node.split_cont_id;
 		split_cont_thr = node.split_cont_thr;
 		
-		split_cate = node.split_cate;
+		//split_cate = node.split_cate;
 		split_cate_id = node.split_cate_id;
 		split_cate_left_string = node.split_cate_left_string;
 		split_cate_right_string = node.split_cate_right_string;
@@ -298,15 +299,15 @@ class NODE{
 		ar & leaf_id;
 		ar & tree_id;
 		
-		ar & split_snp;
+		//ar & split_snp;
 		ar & split_snp_id;
 		ar & split_snp_left_val;
 		
-		ar & split_cont;
+		//ar & split_cont;
 		ar & split_cont_id;
 		ar & split_cont_thr;
 		
-		ar & split_cate;
+		//ar & split_cate;
 		ar & split_cate_id;
 		ar & split_cate_left_string;
 		ar & split_cate_right_string;

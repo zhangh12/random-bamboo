@@ -32,9 +32,9 @@ bool NODE::operator==(const NODE &node) const {
 		return false;
 	}
 	
-	if(split_snp != node.split_snp){
-		return false;
-	}
+//	if(split_snp != node.split_snp){
+//		return false;
+//	}
 	
 	if(split_snp_id != node.split_snp_id){
 		return false;
@@ -44,9 +44,9 @@ bool NODE::operator==(const NODE &node) const {
 		return false;
 	}
 	
-	if(split_cont != node.split_cont){
-		return false;
-	}
+//	if(split_cont != node.split_cont){
+//		return false;
+//	}
 	
 	if(split_cont_id != node.split_cont_id){
 		return false;
@@ -56,9 +56,9 @@ bool NODE::operator==(const NODE &node) const {
 		return false;
 	}
 	
-	if(split_cate != node.split_cate){
-		return false;
-	}
+//	if(split_cate != node.split_cate){
+//		return false;
+//	}
 	
 	if(split_cate_id != node.split_cate_id){
 		return false;
@@ -1848,7 +1848,7 @@ bool BAMBOO::SplitNode(NODE &node, const bitmat &y64_omp,
 			split_by_cate = false;
 			node.split_by = CODE_SNP;
 			
-			node.split_snp = snp_name[split_snp_id];
+			//node.split_snp = snp_name[split_snp_id];
 			node.split_snp_id = split_snp_id;
 			node.split_snp_left_val = split_snp_left_val;
 			
@@ -1875,7 +1875,7 @@ bool BAMBOO::SplitNode(NODE &node, const bitmat &y64_omp,
 			node.split_cont_upper = -1;
 			node.split_cont_thr = -1e20;
 			
-			node.split_cate = cate_var_name[split_cate_id];
+			//node.split_cate = cate_var_name[split_cate_id];
 			node.split_cate_id = split_cate_id;
 			node.split_cate_left_code = split_cate_left_code;
 			node.split_cate_right_code = split_cate_right_code;
@@ -1896,7 +1896,7 @@ bool BAMBOO::SplitNode(NODE &node, const bitmat &y64_omp,
 			node.split_snp_id = -1;
 			node.split_snp_left_val = -1;
 			
-			node.split_cont = cont_var_name[split_cont_id];
+			//node.split_cont = cont_var_name[split_cont_id];
 			node.split_cont_id = split_cont_id;
 			node.split_cont_lower = split_cont_lower;
 			node.split_cont_upper = split_cont_upper;
@@ -3005,7 +3005,7 @@ void BAMBOO::GrowForestMultiProc(){
 		}
 	}
 	
-	cout << "\r\033[K\r\033[0m\033[?25h" << endl;
+	cout << "\r\033[K\r\033[0m\033[?25h\r";
 	
 	CompOOBErrorMultiProc();
 	
@@ -3742,7 +3742,7 @@ void BAMBOO::SavePrediction(){
 	
 	ofstream file_pred;
 	file_pred.open(path_pred);
-	file_pred << "IND_ID\tPOST_PROB_CASE1\tPOST_PROB_CASE2\tPRED_CLASS" << endl;
+	file_pred << "IND_ID\tPOST_PROB_CASE1\tPRED_CLASS1\tPOST_PROB_CASE2\tPRED_CLASS2" << endl;
 	for(int i = 0; i < nsub_test; ++i){
 		double pp1 = .0;
 		double pp2 = .0;
@@ -3755,8 +3755,17 @@ void BAMBOO::SavePrediction(){
 		}
 		pp1 /= ntree;
 		pp2 = tmp0 / (tmp0 + tmp1);
-		file_pred << individual_id_test[i] << "\t" << pp1 << "\t" << pp2 << "\t";
-		if(tmp0 > tmp1){
+		
+		file_pred << individual_id_test[i] << "\t" << pp1 << "\t";
+		if(pp1 > .5){
+			file_pred << "CASE";
+		}else{
+			file_pred << "CONTROL";
+		}
+		
+		file_pred << "\t" << pp2 << "\t";
+		
+		if(pp2 > .5){
 			file_pred << "CASE";
 		}else{
 			file_pred << "CONTROL";
