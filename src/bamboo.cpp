@@ -1010,6 +1010,8 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	
 	bamboo = vector<vector<NODE> > (ntree);
 	
+	check_out = vector<bool> (ntree, false);
+	
 	model = vector<vector<vector<double> > > (ntree);
 	
 	version = string(RANDOM_BAMBOO_VERSION);
@@ -2517,13 +2519,18 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 		
 		
 		//save memory?
-//		if(!(node.sample_id64.empty())){
-//			vector<bitvec >().swap(node.sample_id64);
-//		}
-//		
-//		if(!(node.sample_id.empty())){
-//			vector<int>().swap(node.sample_id);
-//		}
+		if(!(node.sample_id64.empty())){
+			vector<bitvec >().swap(node.sample_id64);
+		}
+		
+		if(!(node.sample_id.empty())){
+			vector<int>().swap(node.sample_id);
+		}
+		
+		vector<bitvec >().swap(sample_id64_child1);
+		vector<bitvec >().swap(sample_id64_child2);
+		vector<int>().swap(sample_id_child1);
+		vector<int>().swap(sample_id_child2);
 		
 	}
 	
@@ -2602,6 +2609,8 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 	if(trace){
 		cout << "The tree is grown and destroyed" << endl;
 	}
+	
+	check_out[tree_id] = true;
 		
 }
 
@@ -2923,6 +2932,30 @@ void BAMBOO::CompImportance(){
 	
 }
 
+void BAMBOO::PrintProgress(){
+	
+	int completed_jobs = 0;
+	for(int i = 0; i < check_out.size(); ++i){
+		completed_jobs += check_out[i];
+	}
+	int prg = (int) (completed_jobs * 1.0 / ntree * 100);
+	
+	cout << "\033[0m| ";
+	for(int i = 1; i <= 100; ++i){
+		if(i <= prg && i % 2 == 0){
+			cout << "\033[?25l\033[47m\033[1m ";
+		}
+		if(i == prg){
+			cout << "\033[0m " << prg << "% ";
+		}
+		if(i > prg && i % 2 == 0){
+			cout << " ";
+		}
+	}
+	cout << "|\r" << flush;
+	
+}
+
 void BAMBOO::GrowForestSingleProc(){
 	
 //	clock_t start, end;
@@ -2960,9 +2993,18 @@ void BAMBOO::GrowForestMultiProc(){
 		
 		#pragma omp for
 		for(int i = 0; i < ntree; ++i){
+			
 			GrowTree(buf, i);
+			
+			int tid = omp_get_thread_num();
+			if(tid == 0){
+				PrintProgress();
+			}
 		}
 	}
+	
+	PrintProgress();
+	cout << "\033[0m\033[?25h" << endl;
 	
 	CompOOBErrorMultiProc();
 	

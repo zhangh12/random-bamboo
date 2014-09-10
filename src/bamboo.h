@@ -532,6 +532,7 @@ class BAMBOO{
 		int nblock;
 		int nblock_test;
 		
+		vector<bool> check_out;//indicate whether a tree has been created. used when estimate the progress
 		vector<vector<vector<double> > > model;
 		vector<vector<int> > var_id_used_in_tree;//var ID used by at least one tree in the forest
 		
@@ -581,6 +582,7 @@ class BAMBOO{
 		void CompPermutationImportance();
 		void WriteImportance();
 		void CompImportance();
+		void PrintProgress();
 		void GrowForestSingleProc();
 		void GrowForestMultiProc();
 		void WriteOOBError();

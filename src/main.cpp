@@ -128,6 +128,7 @@
 //     (2) Modify prediction method                              //
 //     (3) Interface extended. Saved model can be used directly  //
 //         in prediction                                         //
+//     (4) Add progress bar                                      //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 
