@@ -129,6 +129,7 @@
 //     (3) Interface extended. Saved model can be used directly  //
 //         in prediction                                         //
 //     (4) Add progress bar                                      //
+//     (5) Determine max supported CPUs                          //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 
@@ -277,6 +278,11 @@ int main(int argc, char **argv){
 				if(nthread <= 0){
 					cout << "Error: The option --nthread must be a positive integer" << endl;
 					return 0;
+				}
+				
+				if(nthread > sysconf( _SC_NPROCESSORS_ONLN )){
+					nthread = sysconf( _SC_NPROCESSORS_ONLN );
+					cout << "Warning: --nthread is reset to be " << sysconf( _SC_NPROCESSORS_ONLN ) << " (# CPUs)" << endl;
 				}
 				break;
 			case 'w':

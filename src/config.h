@@ -6,6 +6,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <iomanip>
+#include <unistd.h>
 
 using namespace std;
 

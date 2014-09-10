@@ -2940,7 +2940,7 @@ void BAMBOO::PrintProgress(){
 	}
 	int prg = (int) (completed_jobs * 1.0 / ntree * 100);
 	
-	cout << "\033[0m| ";
+	cout << "\033[?25l\033[0m| ";
 	for(int i = 1; i <= 100; ++i){
 		if(i <= prg && i % 2 == 0){
 			cout << "\033[?25l\033[47m\033[1m ";
