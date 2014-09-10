@@ -1,4 +1,7 @@
 plink --file train --out train --make-bed --noweb
 plink --file test --out test --make-bed --noweb
+plink --file train --recodeA --noweb --out train
+plink --file test --recodeA --noweb --out test
 bamboo --file train --out rb --mtry 5000 --ntree 10000 --nthread 16 --seed 1
+rjungle -f train.raw -p -v -o rj --mtry 5000 --ntree 10000 --nthread 16 --write 2 --seeed 1
 

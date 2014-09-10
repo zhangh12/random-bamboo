@@ -2652,7 +2652,8 @@ void BAMBOO::CompOOBErrorSingleProc(const int forest_size){
 	if(!at_least_one_oob_in_forest){//no oob for this whole forest
 		oob_error[forest_size - 1] = -1.0;
 	}
-	cout << "The OOB Error over " << forest_size << " trees is " << oob_error[forest_size - 1] << endl;
+	
+	cout << "\033[?25l\r\033[K\rThe OOB Error over " << forest_size << " trees is " << oob_error[forest_size - 1] << flush;
 	
 	
 }
@@ -2973,6 +2974,7 @@ void BAMBOO::GrowForestSingleProc(){
 		GrowTree(buf, i);
 		CompOOBErrorSingleProc(i+1);//size of forest
 	}
+	cout << "\033[0m\033[?25h" << endl;
 	
 //	end = clock();
 //	cout << "Elapsed time: " << ((float) (end - start))/CLOCKS_PER_SEC << " sec" << endl;
@@ -3003,8 +3005,7 @@ void BAMBOO::GrowForestMultiProc(){
 		}
 	}
 	
-	PrintProgress();
-	cout << "\033[0m\033[?25h" << endl;
+	cout << "\r\033[K\r\033[0m\033[?25h" << endl;
 	
 	CompOOBErrorMultiProc();
 	
