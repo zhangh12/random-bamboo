@@ -537,7 +537,7 @@ class BAMBOO{
 		int nblock_test;
 		
 		vector<bool> check_out;//indicate whether a tree has been created. used when estimate the progress
-		vector<vector<vector<double> > > model;
+		//vector<vector<vector<double> > > model;
 		vector<vector<int> > var_id_used_in_tree;//var ID used by at least one tree in the forest
 		
 		vector<vector<int> > pred_leaf_id; //the leaf id that a sample will fall in, predicted by a tree, ntree X nsub

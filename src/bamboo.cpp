@@ -2216,9 +2216,9 @@ void BAMBOO::DestroyTree(vector<NODE*> &pointer){
 
 void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 	
-	if(!model[tree_id].empty()){
-		model[tree_id].clear();
-	}
+//	if(!model[tree_id].empty()){
+//		model[tree_id].clear();
+//	}
 	
 	vector<bitvec > y64_omp;
 	vector<bitvec > not_y64_omp;
