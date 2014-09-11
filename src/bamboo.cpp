@@ -310,7 +310,7 @@ void BAMBOO::EncodeCate(){
 
 void BAMBOO::PrintPara(){
 	
-	cout << "Genotypes of " << nsnp << " markders are loaded in SNP-major mode from [ " << path_bed << " ]" << endl;
+	cout << "Genotypes of " << nsnp << " markers are loaded in SNP-major mode from [ " << path_bed << " ]" << endl;
 	if(flip){
 		cout << "Genotypes are flipped if the minor allele frequencies > 0.5" << endl;
 	}
@@ -1151,9 +1151,7 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	pred_oob_class = vector<vector<int> > (ntree, vector<int> (nsub, -1));
 	oob_error = vector<double> (ntree, .0);
 	num_vote_correct_class = vector<int> (ntree, 0);
-	if(imp_measure == IMP_BREIMAN_CUTLER || imp_measure == IMP_LIAW_WIENER){
-		num_vote_loss_permuted_correct_class = vector<vector<int> > (ntree, vector<int> (nvar, 0));
-	}
+	num_vote_loss_permuted_correct_class = vector<vector<int> > (ntree, vector<int> (nvar, 0));
 	oob_size = vector<int> (ntree, 0);
 	var_id_used_in_tree = vector<vector<int> > (ntree);
 	
@@ -1741,18 +1739,31 @@ bool BAMBOO::SplitNode(NODE &node, const bitmat &y64_omp,
 			tab.nctrl = 0;
 			tab.r = .0;
 			
-			bitvec &ref_xcate64 = xcate64[cate_start[cate_id] + t];
-			for(int j = 0; j < iter_omp.size(); ++j){
-				const bitvec &ref_not_y64 = not_y64_omp[j];
-				const bitvec &ref_y64 = y64_omp[j];
-				const bitvec &ref_sample_id64 = node.sample_id64[j];
-				for(int l = 0; l < iter_omp[j].size(); ++l){
-					int k = iter_omp[j][l];
-					uint64 u = ref_sample_id64[k] & ref_xcate64[k];
-					tab.nctrl += PopCount(u & ref_not_y64[k]);
-					tab.ncase += PopCount(u & ref_y64[k]);
+			if(node.large_sample_size){
+				bitvec &ref_xcate64 = xcate64[cate_start[cate_id] + t];
+				for(int j = 0; j < iter_omp.size(); ++j){
+					const bitvec &ref_not_y64 = not_y64_omp[j];
+					const bitvec &ref_y64 = y64_omp[j];
+					const bitvec &ref_sample_id64 = node.sample_id64[j];
+					for(int l = 0; l < iter_omp[j].size(); ++l){
+						int k = iter_omp[j][l];
+						uint64 u = ref_sample_id64[k] & ref_xcate64[k];
+						tab.nctrl += PopCount(u & ref_not_y64[k]);
+						tab.ncase += PopCount(u & ref_y64[k]);
+					}
+				}
+			}else{
+				for(int k = 0; k < node.sample_id.size(); ++k){
+					int sample_id = node.sample_id[k];
+					int c = xcate_int[cate_id][sample_id];
+					if(y[sample_id]){//case
+						tab.ncase += id_cnt_omp[sample_id];
+					}else{
+						tab.nctrl += id_cnt_omp[sample_id];
+					}
 				}
 			}
+			
 			tab.N = tab.ncase + tab.nctrl;
 			tab.r = tab.N ? (tab.ncase * 1.0 / tab.N) : (-1.0);
 		}
@@ -2392,51 +2403,67 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 		//prepare for the child nodes
 		int max_cnt = node.sample_id64.size();
 		
-		vector<bitvec > sample_id64_child1 = node.sample_id64;
-		vector<bitvec > sample_id64_child2 = node.sample_id64;
+		vector<bitvec > sample_id64_child1;
+		vector<bitvec > sample_id64_child2;
 		vector<int> sample_id_child1, sample_id_child2;
-		sample_id_child1.reserve(100);
-		sample_id_child2.reserve(100);
+		sample_id_child1.reserve(node.N_left);
+		sample_id_child2.reserve(node.N_right);
+		
+		if(node.large_sample_size){//save memory
+			sample_id64_child1 = node.sample_id64;
+			sample_id64_child2 = node.sample_id64;
+		}
 		
 		if(node.split_by == CODE_SNP){//split by a SNP
 			
-			if(node.split_snp_left_val == 0){
-				for(int k = 0; k < max_cnt; ++k){
-					for(int j = 0; j < nblock; ++j){
-						uint64 u = node.sample_id64[k][j];
-						if(u){
-							sample_id64_child1[k][j] = u & geno64[node.split_snp_id * 3][j];
-							sample_id64_child2[k][j] = u & (geno64[node.split_snp_id * 3 + 1][j] | geno64[node.split_snp_id * 3 + 2][j]);
+			if(node.large_sample_size){
+				
+				if(node.split_snp_left_val == 0){
+					for(int k = 0; k < max_cnt; ++k){
+						for(int j = 0; j < nblock; ++j){
+							uint64 u = node.sample_id64[k][j];
+							if(u){
+								sample_id64_child1[k][j] = u & geno64[node.split_snp_id * 3][j];
+								sample_id64_child2[k][j] = u & (geno64[node.split_snp_id * 3 + 1][j] | geno64[node.split_snp_id * 3 + 2][j]);
+							}
 						}
 					}
-				}
-			}else if(node.split_snp_left_val == 1){
-				for(int k = 0; k < max_cnt; ++k){
-					for(int j = 0; j < nblock; ++j){
-						uint64 u = node.sample_id64[k][j];
-						if(u){
-							sample_id64_child1[k][j] = u & (geno64[node.split_snp_id * 3][j] | geno64[node.split_snp_id * 3 + 1][j]);
-							sample_id64_child2[k][j] = u & geno64[node.split_snp_id * 3 + 2][j];
+				}else if(node.split_snp_left_val == 1){
+					for(int k = 0; k < max_cnt; ++k){
+						for(int j = 0; j < nblock; ++j){
+							uint64 u = node.sample_id64[k][j];
+							if(u){
+								sample_id64_child1[k][j] = u & (geno64[node.split_snp_id * 3][j] | geno64[node.split_snp_id * 3 + 1][j]);
+								sample_id64_child2[k][j] = u & geno64[node.split_snp_id * 3 + 2][j];
+							}
 						}
 					}
+				}else{//impossible
+					cout << "Error: children" << endl;
+					exit(1);
 				}
-			}else{//impossible
-				cout << "Error: children" << endl;
-				exit(1);
 			}
-			
+				
 			for(int k = 0; k < node.sample_id.size(); ++k){
 				int sample_id = node.sample_id[k];
-				if(sample_id64_child1[0][bitloc[sample_id]] & MASK_offset[sample_id]){
-					sample_id_child1.push_back(sample_id);
-				}else{
-					if(sample_id64_child2[0][bitloc[sample_id]] & MASK_offset[sample_id]){
+				if(node.split_snp_left_val == 0){
+					if(geno64[node.split_snp_id * 3][bitloc[sample_id]] & MASK_offset[sample_id]){//snp == 0
+						sample_id_child1.push_back(sample_id);
+					}else{//snp == 1, 2
 						sample_id_child2.push_back(sample_id);
-					}else{
-						cout << "woooooooooooooow" << endl;
 					}
+				}else if(node.split_snp_left_val == 1){
+					if(geno64[node.split_snp_id * 3 + 2][bitloc[sample_id]] & MASK_offset[sample_id]){//snp == 2
+						sample_id_child2.push_back(sample_id);
+					}else{//snp == 0, 1
+						sample_id_child1.push_back(sample_id);
+					}
+				}else{//impossible
+					cout << "Error: children" << endl;
+					exit(1);
 				}
 			}
+			
 		}else if(node.split_by == CODE_CONT){//split by continuous variable
 			
 			if(false) cout << "split by cont" << endl;
@@ -2445,44 +2472,96 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 				int sample_id = node.sample_id[k];
 				if(xcont[node.split_cont_id][sample_id] <= node.split_cont_thr){//child1, left
 					sample_id_child1.push_back(sample_id);
-					for(int j = 0; j < max_cnt; ++j){
-						sample_id64_child2[j][bitloc[sample_id]] &= ~(MASK_offset[sample_id]);
+					if(node.large_sample_size){
+						for(int j = 0; j < max_cnt; ++j){
+							sample_id64_child2[j][bitloc[sample_id]] &= ~(MASK_offset[sample_id]);
+						}
 					}
 				}else{//child2, right
 					sample_id_child2.push_back(sample_id);
-					for(int j = 0; j < max_cnt; ++j){
-						sample_id64_child1[j][bitloc[sample_id]] &= ~(MASK_offset[sample_id]);
+					if(node.large_sample_size){
+						for(int j = 0; j < max_cnt; ++j){
+							sample_id64_child1[j][bitloc[sample_id]] &= ~(MASK_offset[sample_id]);
+						}
 					}
 				}
 			}
 		}else if(node.split_by == CODE_CATE){//split by categorical variable
 			
-			bitvec v64 (nblock, (uint64) 0);
-			int cate_id = node.split_cate_id;
-			for(int j = 0; j < nblock; ++j){
-				for(int t = 0; t < node.split_cate_left_code.size(); ++t){
-					v64[j] |= xcate64[cate_start[cate_id]+node.split_cate_left_code[t]][j];
-				}
-			}
-			
-			for(int k = 0; k < max_cnt; ++k){
+			if(node.large_sample_size){
+				bitvec v64 (nblock, (uint64) 0);
+				int cate_id = node.split_cate_id;
 				for(int j = 0; j < nblock; ++j){
-					sample_id64_child1[k][j] = node.sample_id64[k][j] & v64[j];
-					sample_id64_child2[k][j] = node.sample_id64[k][j] & (~(v64[j]));//could not be a problem
-				}
-			}
-			
-			for(int k = 0; k < node.sample_id.size(); ++k){
-				int sample_id = node.sample_id[k];
-				if(sample_id64_child1[0][bitloc[sample_id]] & MASK_offset[sample_id]){
-					sample_id_child1.push_back(sample_id);
-				}else{
-					if(sample_id64_child2[0][bitloc[sample_id]] & MASK_offset[sample_id]){
-						sample_id_child2.push_back(sample_id);
-					}else{
-						cout << "woooooooooooooow" << endl;
+					for(int t = 0; t < node.split_cate_left_code.size(); ++t){
+						v64[j] |= xcate64[cate_start[cate_id]+node.split_cate_left_code[t]][j];
 					}
 				}
+				
+				for(int k = 0; k < max_cnt; ++k){
+					for(int j = 0; j < nblock; ++j){
+						sample_id64_child1[k][j] = node.sample_id64[k][j] & v64[j];
+						sample_id64_child2[k][j] = node.sample_id64[k][j] & (~(v64[j]));//could not be a problem
+					}
+				}
+				
+				for(int k = 0; k < node.sample_id.size(); ++k){
+					int sample_id = node.sample_id[k];
+					if(sample_id64_child1[0][bitloc[sample_id]] & MASK_offset[sample_id]){
+						sample_id_child1.push_back(sample_id);
+					}else{
+						sample_id_child2.push_back(sample_id);
+					}
+				}
+			}else{
+				
+				for(int k = 0; k < node.sample_id.size(); ++k){
+					int sample_id = node.sample_id[k];
+					int c = xcate_int[node.split_cate_id][sample_id];
+					bool to_side = false;
+					if(node.split_cate_left_code.size() <= node.split_cate_right_code.size()){
+						for(int ii = 0; ii < node.split_cate_left_code.size(); ++ii){
+							if(c == node.split_cate_left_code[ii]){
+								to_side = true;
+								sample_id_child1.push_back(sample_id);
+								break;
+							}
+						}
+						
+						if(!to_side){
+							for(int ii = 0; ii < node.split_cate_right_code.size(); ++ii){
+								if(c == node.split_cate_right_code[ii]){
+									to_side = true;
+									sample_id_child2.push_back(sample_id);
+									break;
+								}
+							}
+						}
+					}else{
+						for(int ii = 0; ii < node.split_cate_right_code.size(); ++ii){
+							if(c == node.split_cate_right_code[ii]){
+								to_side = true;
+								sample_id_child2.push_back(sample_id);
+								break;
+							}
+						}
+						
+						if(!to_side){
+							for(int ii = 0; ii < node.split_cate_left_code.size(); ++ii){
+								if(c == node.split_cate_left_code[ii]){
+									to_side = true;
+									sample_id_child1.push_back(sample_id);
+									break;
+								}
+							}
+						}
+					}
+					
+					if(!to_side){
+						cout << "Error: Unknown level (" << c << ") of categorical variable " << node.split_cate_id + 1 << " detected" << endl;
+						exit(1);
+					}
+				}
+				
 			}
 		}else{//impossible
 			cout << "Error: Invalid splitting code" << endl;
@@ -2526,14 +2605,24 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 			vector<bitvec >().swap(node.sample_id64);
 		}
 		
+		if(!sample_id64_child1.empty()){
+			vector<bitvec >().swap(sample_id64_child1);
+		}
+		
+		if(!sample_id64_child2.empty()){
+			vector<bitvec >().swap(sample_id64_child2);
+		}
+		
 		if(!(node.sample_id.empty())){
 			vector<int>().swap(node.sample_id);
 		}
 		
-		vector<bitvec >().swap(sample_id64_child1);
-		vector<bitvec >().swap(sample_id64_child2);
-		vector<int>().swap(sample_id_child1);
-		vector<int>().swap(sample_id_child2);
+		if(!sample_id_child1.empty()){
+			vector<int>().swap(sample_id_child1);
+		}
+		if(!sample_id_child2.empty()){
+			vector<int>().swap(sample_id_child2);
+		}
 		
 	}
 	
@@ -3102,6 +3191,9 @@ void BAMBOO::GrowForest(){
 		exit(1);
 	}
 	
+	end = time(NULL);
+	cout << "Elapsed time: " << (end - start) / 3600 << "h " << ((end - start) % 3600) / 60 << "m " << (end - start) % 60 << "s" << endl;
+	
 	WriteOOBError();
 	CompConfusionMatrix();
 	
@@ -3112,7 +3204,7 @@ void BAMBOO::GrowForest(){
 	SaveBamboo();
 	
 	end = time(NULL);
-	cout << "Elapsed time : " << (end - start) / 3600 << "h " << ((end - start) % 3600) / 60 << "m " << (end - start) % 60 << "s" << endl;
+	cout << "Elapsed time: " << (end - start) / 3600 << "h " << ((end - start) % 3600) / 60 << "m " << (end - start) % 60 << "s" << endl;
 	
 	time_t complete_time;
 	time(&complete_time);
