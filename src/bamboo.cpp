@@ -1012,7 +1012,7 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	
 	check_out = vector<bool> (ntree, false);
 	
-	model = vector<vector<vector<double> > > (ntree);
+	//model = vector<vector<vector<double> > > (ntree);
 	
 	version = string(RANDOM_BAMBOO_VERSION);
 	
@@ -1154,6 +1154,7 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	num_vote_loss_permuted_correct_class = vector<vector<int> > (ntree, vector<int> (nvar, 0));
 	oob_size = vector<int> (ntree, 0);
 	var_id_used_in_tree = vector<vector<int> > (ntree);
+	
 	
 	
 	/////
@@ -2976,6 +2977,10 @@ void BAMBOO::GrowForestSingleProc(){
 	}
 	cout << "\033[0m\033[?25h" << endl;
 	
+	time_t bamboo_fitted_time;
+	time(&bamboo_fitted_time);
+	cout << "Bamboo fitted: " << ctime(&bamboo_fitted_time);
+	
 //	end = clock();
 //	cout << "Elapsed time: " << ((float) (end - start))/CLOCKS_PER_SEC << " sec" << endl;
 	
@@ -3006,6 +3011,10 @@ void BAMBOO::GrowForestMultiProc(){
 	}
 	
 	cout << "\r\033[K\r\033[0m\033[?25h\r";
+	
+	time_t bamboo_fitted_time;
+	time(&bamboo_fitted_time);
+	cout << "Bamboo fitted: " << ctime(&bamboo_fitted_time);
 	
 	CompOOBErrorMultiProc();
 	
