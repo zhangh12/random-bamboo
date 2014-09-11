@@ -132,6 +132,11 @@
 //     (5) The names of variables are removed from NODE to save  //
 //         memory. One the variables' IDs are saved in NODE      //
 //                                                               //
+//     September 11, 2014                                        //
+//     (1) Modify functions SplitNode and GrowTree to save       //
+//         memory. If sample size in a node is small, no long    //
+//         store 64-bit vectors for sample indicators            //
+//                                                               //
 ///////////////////////////////////////////////////////////////////
 
 #include "config.h"

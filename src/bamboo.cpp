@@ -3895,8 +3895,8 @@ void BAMBOO::PredictFromBamboo(){
 	
 	ntree = bamboo.size();
 	pred_leaf_id_test = vector<vector<int> > (ntree, vector<int>(nsub_test, -1));
-	pred_risk_ctrl_test = vector<vector<double> > (ntree, vector<double>(nsub_test, -1));
-	pred_risk_case_test = vector<vector<double> > (ntree, vector<double>(nsub_test, -1));
+	pred_risk_ctrl_test = vector<vector<double> > (ntree, vector<double>(nsub_test, -1.0));
+	pred_risk_case_test = vector<vector<double> > (ntree, vector<double>(nsub_test, -1.0));
 	
 	for(int i = 0; i < nsub_test; ++i){
 		int sample_id = i;
