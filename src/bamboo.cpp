@@ -1151,7 +1151,9 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	pred_oob_class = vector<vector<int> > (ntree, vector<int> (nsub, -1));
 	oob_error = vector<double> (ntree, .0);
 	num_vote_correct_class = vector<int> (ntree, 0);
-	num_vote_loss_permuted_correct_class = vector<vector<int> > (ntree, vector<int> (nvar, 0));
+	if(imp_measure == IMP_BREIMAN_CUTLER || imp_measure == IMP_LIAW_WIENER){
+		num_vote_loss_permuted_correct_class = vector<vector<int> > (ntree, vector<int> (nvar, 0));
+	}
 	oob_size = vector<int> (ntree, 0);
 	var_id_used_in_tree = vector<vector<int> > (ntree);
 	
