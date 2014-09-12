@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.2.4    |   September 11, 2014    //
+//    RANDOM BAMBOO    |     v0.3.0    |   September 11, 2014    //
 //---------------------------------------------------------------//
 //      (C) 2014 Han Zhang, GNU General Public License  V3       //
 //---------------------------------------------------------------//
@@ -7,137 +7,14 @@
 //           http://www.hanzhang.name/softwares/rb               //
 //---------------------------------------------------------------//
 //                                                               //
-//   Update: v0.1.x                                              //
-//                                                               //
-//     June 2, 2014                                              //
-//     (1) Bugs fixed in computing OOB error                     //
-//     (2) Bugs fixed in computing Gini importance               //
-//         The sum of decrease in impurity from splitting on     //
-//         a variable should be weighted by the sample size      //
-//         in its parent node, i.e.                              //
-//         DEC = N_P ( tau(P) - p_L tau(L) - p_R tau(R) )        //
-//         The bug is because I missed N_P in the formula        //
-//         which was not mentioned in many literatures           //
-//                                                               //
-//     June 3, 2014                                              //
-//     (1) Revise and simplify the data structure to handle      //
-//         continuous covariates                                 //
-//                                                               //
-//     June 6, 2014                                              //
-//     (1) Fix bugs when continuous covariates are involved      //
-//     (2) handle categorical covariates                         //
-//                                                               //
-//     June 18, 2014                                             //
-//     (1) Use reference in loops in SplitNode() to speedup      //
-//         the program. x2 accelerate                            //
-//                                                               //
-//     June 20, 2014                                             //
-//     (1) For the nodes with small sample size, a better way    //
-//         to compute the criteria is NOT to use the Boolean     //
-//         operations to construct the contingency tables.       //
-//         x2 accelerate                                         //
-//                                                               //
-//     June 23, 2014                                             //
-//     (1) unify the data structure used for genotype and        //
-//         categorical variables                                 //
-//                                                               //
-//     July 7, 2014                                              //
-//     (1) Re-write the whole program. The result is slightly    //
-//         different from v0.1.5. The reason is that I           //
-//         re-define the left and right children of a tree       //
-//         and thus different random series (selected SNPs       //
-//         and/or covariates) are applied to the child leaves    //
-//                                                               //
-//     July 8, 2014                                              //
-//     (1) Add CompPermutationImportance()                       //
-//     (2) Fix bugs in prediction function PutDownSampleToLeaf   //
-//                                                               //
-//     July 14, 2014                                             //
-//     (1) Re-wirte the prediction function. Predict a sample    //
-//         by using the tree structure rather than screening     //
-//         all the leaves                                        //
-//     (2) Add option --noflip. By default, flip is on and the   //
-//         genotype is recoded if MAF > 0.5. Note that the       //
-//         tree built on a flipped genotypes can be different    //
-//         from the one built on the original genotypes          //
-//         (compared with last version)                          //
-//     (3) Enable multi-Processing by adding option --nthread    //
-//     (4) Fix bug in calling openMP                             //
-//     (5) Fix bug in computing OOB error                        //
-//     (6) Output various permuted variable importances          //
-//                                                               //
-//     July 17, 2014                                             //
-//     (1) Add option --classwt to handle imbalanced data.       //
-//         The modifications occured in two places. One is in    //
-//         function SplitNode when computing the Gini impurity.  //
-//         The other one is in determining the class prediction  //
-//         in a terminal node. Some of the members of struct     //
-//         NODE was modified accordingly                         //
-//     (2) Add option --cutoff. It only works in the final vote, //
-//         i.e., aggregatting the weighted votes from each       //
-//         individual tree                                       //
-//     (3) Compute confusion matrix using oob samples            //
-//     (4) Modify the definition of gini impurity.               //
-//     (5) Modify the way to define the class prediction in a    //
-//         leaf                                                  //
-//     (6) Modify the way to define the final class prediction   //
-//         of the whole forest                                   //
-//     (7) (1, 4-6) are based on rpart's manual when class       //
-//         weights are taken into account                        //
-//                                                               //
-//     July 18, 2014                                             //
-//     (1) Fix bugs. In the former version, I only updated the   //
-//         gini impurity when splitting with SNPs. Now I made it //
-//         for categorical and continuous covariates             //
-//     (2) Reorganized the file structure                        //
-//     (3) Turn off automatical reweight and remove options      //
-//         --noreweight, since the default weight (naively       //
-//         balance two classes) doesn't give result close to     //
-//         the optimal one. The option --classwt is still        //
-//         available. Instead, add an option --balance to adjust //
-//         the data to be 1:1 balanced                           //
-//     (4) Output confusion matrix to local file *.cof           //
-//     (5) Delete path2node in struct NODE                       //
-//                                                               //
-//   Update: v0.2.x                                              //
-//                                                               //
-//     July 18, 2014                                             //
-//     (1) Simplify the struct NODE to facilitate the saving     //
-//         procedure of the forest. Potential memory issues      //
-//         fixed by redesigning the copy constructor             //
-//                                                               //
-//     July 19, 2014                                             //
-//     (1) Add feature to save the forest by default             //
-//     (2) Add option --nobamboo to switch off the feature of    //
-//         saving forest                                         //
-//                                                               //
-//     July 21, 2014                                             //
-//     (1) Fix bug when computing permutation importance, i.e.,  //
-//         if the SD is zero, then the scaled importance is      //
-//         marked as special number                              //
-//     (2) Serialize the forest to local file for future         //
-//         prediction                                            //
-//                                                               //
-//     July 26, 2014                                             //
-//     (1) Load test data                                        //
-//     (2) Add prediction feature                                //
-//     (3) Mute option --flip                                    //
-//                                                               //
-//     September 9, 2014                                         //
-//     (1) Load specified model and testing data                 //
-//     (2) Modify prediction method                              //
-//     (3) Interface extended. Saved model can be used directly  //
-//         in prediction                                         //
-//     (4) Add progress bar                                      //
-//     (5) The names of variables are removed from NODE to save  //
-//         memory. One the variables' IDs are saved in NODE      //
+//   Update: 0.3.x                                               //
 //                                                               //
 //     September 11, 2014                                        //
-//     (1) Modify functions SplitNode and GrowTree to save       //
-//         memory. If sample size in a node is small, no long    //
-//         store 64-bit vectors for sample indicators            //
+//     (1) Re-wirte the whole program to allow large ntree nsub  //
+//         and nvar                                              //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
+
 
 #include "config.h"
 #include "constant.h"
@@ -375,14 +252,14 @@ int main(int argc, char **argv){
 	}
 	
 	if(!file_spec && pred_spec){
-		BAMBOO bb(out, pred, model);
-		bb.GrowForest();
-		bb.PredictFromBamboo();
+		//BAMBOO bb(out, pred, model);
+		//bb.GrowForest();
+		//bb.PredictFromBamboo();
 	}else{
 		BAMBOO bb(file, out, cont, cate, pred, ntree, mtry, max_nleaf, min_leaf_size, imp_measure, seed, 
 		nthread, class_weight, cutoff, flip, output_prox, output_imp, output_bamboo, balance, trace);
 		bb.GrowForest();
-		bb.PredictFromBamboo();
+		//bb.PredictFromBamboo();
 	}
 	
 	

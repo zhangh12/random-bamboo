@@ -18,124 +18,104 @@ ostream& operator<<(ostream &os, const vector<double> &v){
 }
 
 
-bool NODE::operator==(const NODE &node) const {
+bool MINI_NODE::operator==(const MINI_NODE &mini_node) const {
 	
-	if(node_id != node.node_id){
+	if(node_id != mini_node.node_id){
 		return false;
 	}
 	
-	if(leaf_id != node.leaf_id){
+	if(leaf_id != mini_node.leaf_id){
 		return false;
 	}
 	
-	if(tree_id != node.tree_id){
+	if(tree_id != mini_node.tree_id){
 		return false;
 	}
 	
-//	if(split_snp != node.split_snp){
-//		return false;
-//	}
-	
-	if(split_snp_id != node.split_snp_id){
+	if(split_snp_id != mini_node.split_snp_id){
 		return false;
 	}
 	
-	if(split_snp_left_val != node.split_snp_left_val){
+	if(split_snp_left_val != mini_node.split_snp_left_val){
 		return false;
 	}
 	
-//	if(split_cont != node.split_cont){
-//		return false;
-//	}
-	
-	if(split_cont_id != node.split_cont_id){
+	if(split_cont_id != mini_node.split_cont_id){
 		return false;
 	}
 	
-	if((split_cont_thr - node.split_cont_thr) > 1e-12){
+	if((split_cont_thr - mini_node.split_cont_thr) > 1e-12){
 		return false;
 	}
 	
-//	if(split_cate != node.split_cate){
-//		return false;
-//	}
-	
-	if(split_cate_id != node.split_cate_id){
+	if(split_cate_id != mini_node.split_cate_id){
 		return false;
 	}
 	
-	if(split_cate_left_string.size() != node.split_cate_left_string.size()){
+	if(split_cate_left_code.size() != mini_node.split_cate_left_code.size()){
 		return false;
 	}
-	if(split_cate_right_string.size() != node.split_cate_right_string.size()){
+	if(split_cate_right_code.size() != mini_node.split_cate_right_code.size()){
 		return false;
 	}
 	
-	for(int i = 0; i < split_cate_left_string.size(); ++i){
-		if(split_cate_left_string[i] != node.split_cate_left_string[i]){
+	for(int i = 0; i < split_cate_left_code.size(); ++i){
+		if(split_cate_left_code[i] != mini_node.split_cate_left_code[i]){
 			return false;
 		}
 	}
 	
-	for(int i = 0; i < split_cate_right_string.size(); ++i){
-		if(split_cate_right_string[i] != node.split_cate_right_string[i]){
+	for(int i = 0; i < split_cate_right_code.size(); ++i){
+		if(split_cate_right_code[i] != mini_node.split_cate_right_code[i]){
 			return false;
 		}
 	}
 	
-	if(split_by != node.split_by){
+	if(split_by != mini_node.split_by){
 		return false;
 	}
 	
-	if(terminal != node.terminal){
+	if(split_stat != mini_node.split_stat){
 		return false;
 	}
 	
-	if(node_class != node.node_class){
+	if(terminal != mini_node.terminal){
 		return false;
 	}
 	
-	if(abs(node_risk_case - node.node_risk_case) > 1e-12){
+	if(node_class != mini_node.node_class){
 		return false;
 	}
 	
-	if(abs(node_risk_ctrl - node.node_risk_ctrl) > 1e-12){
+	if(abs(node_risk_case - mini_node.node_risk_case) > 1e-12){
 		return false;
 	}
 	
-	if(abs(node_prob[0] - node.node_prob[0]) > 1e-12){
+	if(abs(node_risk_ctrl - mini_node.node_risk_ctrl) > 1e-12){
 		return false;
 	}
 	
-	if(abs(node_prob[1] - node.node_prob[1]) > 1e-12){
+	if(abs(node_prob[0] - mini_node.node_prob[0]) > 1e-12){
 		return false;
 	}
 	
-	if(ncase != node.ncase){
+	if(abs(node_prob[1] - mini_node.node_prob[1]) > 1e-12){
 		return false;
 	}
 	
-	if(nctrl != node.nctrl){
+	if(N != mini_node.N){
 		return false;
 	}
 	
-	if(N != node.N){
+	if(iparent != mini_node.iparent){
 		return false;
 	}
 	
-	if(abs(class_weight - node.class_weight) > 1e-12){
+	if(ichild1 != mini_node.ichild1){
 		return false;
 	}
 	
-	if(iparent != node.iparent){
-		return false;
-	}
-	
-	if(ichild1 != node.ichild1){
-		return false;
-	}
-	
-	if(ichild2 != node.ichild2){
+	if(ichild2 != mini_node.ichild2){
 		return false;
 	}
 	
@@ -192,6 +172,8 @@ BAMBOO::~BAMBOO(){
 	
 }
 
+//find cut points of each continuous covariate
+//find unique values of each continuous covariate
 void BAMBOO::EncodeCont(){
 	
 	cont_cutpnt = vector<vector<double> > (ncont);
@@ -235,6 +217,9 @@ void BAMBOO::EncodeCont(){
 	
 }
 
+//find unique values of each categorical covariate
+//recode categorical covariate into integers
+//find locations of each categorical covariate in 64-bit 2D vectors
 void BAMBOO::EncodeCate(){
 	
 	cate_start = vector<int> (ncate, -1);
@@ -308,6 +293,7 @@ void BAMBOO::EncodeCate(){
 	
 }
 
+
 void BAMBOO::PrintPara(){
 	
 	cout << "Genotypes of " << nsnp << " markers are loaded in SNP-major mode from [ " << path_bed << " ]" << endl;
@@ -344,7 +330,7 @@ void BAMBOO::PrintPara(){
 			cout << "Gini and permutation importances will be calculated" << endl;
 			break;
 		default:
-			cout << "Unknown value of option --imp" << endl;
+			cout << "Error: Unknown value of option --imp" << endl;
 			exit(1);
 	}
 	
@@ -352,6 +338,7 @@ void BAMBOO::PrintPara(){
 	cout << "Each bamboo is grown with mtry " << mtry << endl;
 	
 }
+
 
 void BAMBOO::LoadTrainingData(){
 	
@@ -565,6 +552,8 @@ void BAMBOO::LoadTrainingData(){
 		
 	}
 	
+	nvar = nsnp + ncont + ncate;
+	
 	//sample size and number of SNPs
 	
 	nsub = individual_id.size();
@@ -664,10 +653,34 @@ void BAMBOO::LoadTrainingData(){
 	PROBE1[3] = 0x40;
 	PROBE2[3] = 0x80;
 	
+	
 	MASK = 0x8000000000000000;
 	LEN = 64;
-	nblock = (int) ceil (((double) nsub) / LEN);
 	
+	/////////
+	
+	nblock_var = (int) ceil (((double) nvar) / LEN);
+	bitloc_var.reserve(nvar);
+	MASK_offset_var.reserve(nvar);
+	for(int k = 0; k < nvar; ++k){
+		bitloc_var.push_back(k / LEN);
+		MASK_offset_var.push_back(MASK >> (k % LEN));
+	}
+	
+	nblock_tree = (int) ceil (((double) ntree) / LEN);
+	bitloc_tree.reserve(ntree);
+	MASK_offset_tree.reserve(ntree);
+	for(int k = 0; k < ntree; ++k){
+		bitloc_tree.push_back(k / LEN);
+		MASK_offset_tree.push_back(MASK >> (k % LEN));
+	}
+	
+	var_id_used_in_tree_long = bitmat(nvar, bitvec(nblock_tree, (uint64) 0));
+	var_id_used_in_tree_wide = bitmat(ntree, bitvec(nblock_var, (uint64) 0));
+	
+	//////
+	
+	nblock = (int) ceil (((double) nsub) / LEN);
 	bitloc.reserve(nsub);
 	MASK_offset.reserve(nsub);
 	
@@ -921,6 +934,14 @@ void BAMBOO::LoadTrainingData(){
 		
 		EncodeCate();
 	}
+	
+	oob_id64 = bitmat (ntree, bitvec(nblock, (uint64) 0));
+	ib_id64 = bitmat (ntree, bitvec(nblock, (uint64) 0));
+	
+	////////
+	
+	
+	
 }
 
 
@@ -1119,7 +1140,6 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 		class_weight = input_class_weight;
 	}
 	
-	nvar = nsnp + ncont + ncate;
 	if(!mtry){// 0 is the default value of input_mtry, in that case, the "sqrt" rule is applied
 		mtry = (int) sqrt(1.0 * nvar);
 	}else{
@@ -1128,9 +1148,6 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 			exit(1);
 		}
 	}
-	
-	//must be initialized as .0
-	gini_dec = vector<vector<float> > (ntree, vector<float> (nvar, (float) .0));
 	
 	time_t data_loaded_time;
 	time(&data_loaded_time);
@@ -1144,7 +1161,7 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	for(int i = 0; i < nvar; ++i){
 		importance[i].var_id = i;
 	}
-	pred_leaf_id = vector<vector<int> > (ntree, vector<int> (nsub, -1));
+	pred_node_id = vector<vector<uint16> > (ntree, vector<uint16> (nsub, -1));
 	pred_risk_case = vector<vector<double> > (ntree, vector<double> (nsub, .0));
 	pred_risk_ctrl = vector<vector<double> > (ntree, vector<double> (nsub, .0));
 	pred_sample_class = vector<vector<int> > (ntree, vector<int> (nsub, -1));
@@ -1155,9 +1172,6 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 		num_vote_loss_permuted_correct_class = vector<vector<int> > (ntree, vector<int> (nvar, 0));
 	}
 	oob_size = vector<int> (ntree, 0);
-	var_id_used_in_tree = vector<vector<int> > (ntree);
-	
-	
 	
 	/////
 	
@@ -1201,6 +1215,7 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	}
 	
 }
+
 
 //buf: used in random number generator
 //y64_omp, not_y64_omp: storing y after bootstrapping, expanded as 64-bit matrix to represent replicated samples
@@ -1269,8 +1284,14 @@ void BAMBOO::Bootstrap(drand48_data &buf, bitmat &y64_omp, bitmat &not_y64_omp,
 	in_sample64_omp = bitmat (max_cnt, bitvec(nblock, (uint64) 0));
 	
 	for(int k = 0; k < nsub; ++k){
+		if(id_cnt_omp[k] == 0){
+			oob_id64[bitloc[k]] |= MASK_offset[k];
+		}
 		for(int j = 0; j < id_cnt_omp[k]; ++j){
 			in_sample64_omp[j][bitloc[k]] |= MASK_offset[k];
+			if(j == 0){
+				ib_id64[bitloc[k]] |= MASK_offset[k];
+			}
 			if(y[k]){//y = 1
 				y64_omp[j][bitloc[k]] |= MASK_offset[k];
 			}else{
@@ -1437,7 +1458,7 @@ bool BAMBOO::SplitNode(NODE &node, const bitmat &y64_omp,
 	double max_snp_stat = -1.0;
 	int split_snp_left_val;
 	
-	//asset sel_snp_id_omp.size() + sel_cont_id_omp.size() + sel_cate_id_omp.size() == mtry
+	assert(sel_snp_id_omp.size() + sel_cont_id_omp.size() + sel_cate_id_omp.size() == mtry);
 	for(int i = 0; i < sel_snp_id_omp.size(); ++i){//evaluate the SNP: sel_snp_id_omp[i]
 		
 		int snp_id = sel_snp_id_omp[i];//snp id
@@ -1876,8 +1897,6 @@ bool BAMBOO::SplitNode(NODE &node, const bitmat &y64_omp,
 			node.split_cate_id = -1;
 			node.split_cate_left_code.clear();
 			node.split_cate_right_code.clear();
-			node.split_cate_left_string.clear();
-			node.split_cate_right_string.clear();
 		}else if(split_by_cate){//split node by a categorical covariate
 			split_by_cont = false;
 			split_by_snp = false;
@@ -1895,15 +1914,6 @@ bool BAMBOO::SplitNode(NODE &node, const bitmat &y64_omp,
 			node.split_cate_id = split_cate_id;
 			node.split_cate_left_code = split_cate_left_code;
 			node.split_cate_right_code = split_cate_right_code;
-			node.split_cate_left_string.clear();
-			node.split_cate_right_string.clear();
-			
-			for(int ii = 0; ii < split_cate_left_code.size(); ++ii){
-				node.split_cate_left_string.push_back(cate_unique[split_cate_id][split_cate_left_code[ii]]);
-			}
-			for(int ii = 0; ii < split_cate_right_code.size(); ++ii){
-				node.split_cate_right_string.push_back(cate_unique[split_cate_id][split_cate_right_code[ii]]);
-			}
 		}else if(split_by_cont){//split node by a continuous covariate
 			split_by_snp = false;
 			split_by_cate = false;
@@ -1921,8 +1931,6 @@ bool BAMBOO::SplitNode(NODE &node, const bitmat &y64_omp,
 			node.split_cate_id = -1;
 			node.split_cate_left_code.clear();
 			node.split_cate_right_code.clear();
-			node.split_cate_left_string.clear();
-			node.split_cate_right_string.clear();
 		}else{//impossible
 			cout << "Error" << endl;
 			exit(1);
@@ -1948,274 +1956,6 @@ bool BAMBOO::SplitNode(NODE &node, const bitmat &y64_omp,
 	
 }
 
-//this function test if the a sample will fall down to the leaf
-void BAMBOO::PutDownSampleToTree(const int sample_id, const NODE &root, int &fall_into_leaf_id, vector<char> &track_path){
-	
-	if(sample_id < 0 || sample_id >= nsub){
-		cout << "Error: Invalid sample ID" << endl;
-		exit(1);
-	}
-	
-	if(!track_path.empty()){
-		track_path.clear();
-	}
-	
-	const NODE *node = &root;
-	bool direction = true;//true if to the left, false if to the right
-	while(!(*node).terminal){
-		if((*node).split_by == CODE_SNP){
-			int snp_id = (*node).split_snp_id;
-			int snp_left_val = (*node).split_snp_left_val;
-			if(snp_left_val == 0){//snp == 0 are going to the left
-				direction = 
-				(geno64[snp_id * 3][bitloc[sample_id]] & MASK_offset[sample_id]) ? true : false;//true if snp == 0
-			}else if(snp_left_val == 1){//snp == 0 or are going to the left
-				direction = (geno64[snp_id * 3 + 2][bitloc[sample_id]] & MASK_offset[sample_id]) ? false : true;//false if snp == 2
-			}else{//impossible
-				cout << "Error: Invalide snp_left_val when predicting samples" << endl;
-				exit(1);
-			}
-		}else if((*node).split_by == CODE_CONT){
-			int cont_id = (*node).split_cont_id;
-			direction = (xcont[cont_id][sample_id] <= (*node).split_cont_thr) ? true : false;//true if <= threshold
-		}else if((*node).split_by == CODE_CATE){
-			int cate_id = (*node).split_cate_id;
-			if((*node).split_cate_left_code.size() < (*node).split_cate_right_code.size()){
-				direction = false;
-				for(int ii = 0; ii < (*node).split_cate_left_code.size(); ++ii){
-					if(xcate[cate_id][sample_id] == (*node).split_cate_left_string[ii]){
-						direction = true;
-						break;
-					}
-				}
-			}else{
-				direction = true;
-				for(int ii = 0; ii < (*node).split_cate_right_code.size(); ++ii){
-					if(xcate[cate_id][sample_id] == (*node).split_cate_right_string[ii]){
-						direction = false;
-						break;
-					}
-				}
-			}
-		}else{//impossible
-			cout << "Error: Invalid splitting code in node.split_by" << endl;
-			exit(1);
-		}
-		
-		if(direction){
-			node = (*node).child1;
-			track_path.push_back('L');
-		}else{
-			node = (*node).child2;
-			track_path.push_back('R');
-		}
-	}
-	
-	fall_into_leaf_id = (*node).leaf_id;
-	
-}
-
-void BAMBOO::AssignSample(const NODE &root, const vector<NODE*> &pointer_leaf){
-	
-	int tree_id = root.tree_id;
-	vector<int> &lid = pred_leaf_id[tree_id];
-	
-	if(false){
-		cout << "sample\tclass\tpred\tleaf\tpath" << endl;
-	}
-	for(int k = 0; k < nsub; ++k){//predicte each sample with the tree
-		vector<char> track_path;//left (L) and right (R) along the path to the leaf
-		if(!track_path.empty()){
-			track_path.clear();
-		}
-		
-		int fall_into_leaf_id = -1;
-		PutDownSampleToTree(k, root, fall_into_leaf_id, track_path);//put sample k down in the tree
-		if(fall_into_leaf_id >= 0 && fall_into_leaf_id < pointer_leaf.size()){
-			lid[k] = fall_into_leaf_id;
-		}else{
-			cout << "Error: Cannot assign sample " << k+1 << " to any leaf of the tree " << tree_id+1 << endl;
-			exit(1);
-		}
-		
-		NODE &leaf = (*(pointer_leaf[fall_into_leaf_id]));
-		pred_sample_class[tree_id][k] = leaf.node_class;
-		pred_risk_case[tree_id][k] = leaf.node_risk_case;
-		pred_risk_ctrl[tree_id][k] = leaf.node_risk_ctrl;
-		pred_oob_class[tree_id][k] = leaf.node_class;
-		
-		if(false){
-			cout << k+1 << "\t" << y[k] << "\t" << leaf.node_class 
-			<< "\t" << leaf.node_id+1 << "\t";
-			for(int ii = 0; ii < track_path.size(); ++ii){
-				cout << track_path[ii];
-			}
-			cout << endl;
-		}
-		
-	}
-	
-}
-
-void BAMBOO::AssignOOB(const vector<int> &oob_id_omp, const int tree_id){
-	
-	vector<int> inbag_id_omp = vector<int> (nsub, true);
-	for(int i = 0; i < oob_id_omp.size(); ++i){//index which samples are used to fit the tree
-		inbag_id_omp[oob_id_omp[i]] = false;
-	}
-	
-	for(int k = 0; k < nsub; ++k){
-		if(inbag_id_omp[k]){
-			pred_oob_class[tree_id][k] = -1;
-		}
-	}
-	
-}
-
-void BAMBOO::FisherYatesShuffle(drand48_data &buf, vector<int> &v){
-	
-	for(int k = v.size()-1; k > 0; --k){
-		long int li;
-		lrand48_r(&buf, &li);
-		int j = li % (k+1);
-		int u = v[j];
-		v[j] = v[k];
-		v[k] = u;
-	}
-	
-}
-
-void BAMBOO::PutDownPermutedOOB2Tree(const int sample_id, const int var_id, 
-	const int permuted_sample_id, const NODE &root, int &fall_into_leaf_id){
-	
-	if(sample_id < 0 || sample_id >= nsub || permuted_sample_id < 0 || permuted_sample_id >= nsub){
-		cout << "Error: Invalid sample ID or permuted sample ID" << endl;
-		exit(1);
-	}
-	
-	const NODE *node = &root;
-	bool direction = true;//true if to the left, false if to the right
-	while(!(*node).terminal){
-		if((*node).split_by == CODE_SNP){
-			int snp_id = (*node).split_snp_id;
-			int snp_left_val = (*node).split_snp_left_val;
-			int sid = (snp_id == var_id) ? permuted_sample_id : sample_id;
-			if(snp_left_val == 0){//snp == 0 are going to the left
-				direction = 
-				(geno64[snp_id * 3][bitloc[sid]] & MASK_offset[sid]) ? true : false;//true if snp == 0
-			}else if(snp_left_val == 1){//snp == 0 or are going to the left
-				direction = (geno64[snp_id * 3 + 2][bitloc[sid]] & MASK_offset[sid]) ? false : true;//false if snp == 2
-			}else{//impossible
-				cout << "Error: Invalide snp_left_val when predicting permuted samples" << endl;
-				exit(1);
-			}
-		}else if((*node).split_by == CODE_CONT){
-			int cont_id = (*node).split_cont_id;
-			int sid = (cont_id + nsnp == var_id) ? permuted_sample_id : sample_id;
-			direction = (xcont[cont_id][sid] <= (*node).split_cont_thr) ? true : false;//true if <= threshold
-		}else if((*node).split_by == CODE_CATE){
-			int cate_id = (*node).split_cate_id;
-			int sid = (cate_id + nsnp + ncont == var_id) ? permuted_sample_id : sample_id;
-			int size_left = (*node).split_cate_left_code.size();
-			int size_right = (*node).split_cate_right_code.size();
-			string str = xcate[cate_id][sid];
-			if(size_left < size_right){
-				direction = false;
-				for(int ii = 0; ii < size_left; ++ii){
-					if(str == (*node).split_cate_left_string[ii]){
-						direction = true;
-						break;
-					}
-				}
-			}else{
-				direction = true;
-				for(int ii = 0; ii < size_right; ++ii){
-					if(str == (*node).split_cate_right_string[ii]){
-						direction = false;
-						break;
-					}
-				}
-			}
-		}else{//impossible
-			cout << "Error: Invalid splitting code in node.split_by" << endl;
-			exit(1);
-		}
-		
-		if(direction){
-			node = (*node).child1;
-		}else{
-			node = (*node).child2;
-		}
-	}
-	
-	fall_into_leaf_id = (*node).leaf_id;
-	
-}
-
-void BAMBOO::AssignPermutedOOB(drand48_data &buf, const NODE &root, const vector<NODE*> &pointer_leaf, const vector<int> &oob_id_omp){
-	
-	int tree_id = root.tree_id;
-	
-	int &nvcc = num_vote_correct_class[tree_id];
-	nvcc = 0;
-	for(int i = 0; i < oob_id_omp.size(); ++i){
-		int sample_id = oob_id_omp[i];
-		if(pred_oob_class[tree_id][sample_id] == y[sample_id]){//a vote cast for the correct class
-			++nvcc;
-		}
-	}
-	
-	//initialization
-	vector<int> permuted_oob_id = oob_id_omp;
-	
-	int round = 0;
-	int unchange = 0;
-	//in each iteration, permute one variable used in the tree
-	for(int j = 0; j < var_id_used_in_tree[tree_id].size(); ++j){
-		int var_id = var_id_used_in_tree[tree_id][j];
-		FisherYatesShuffle(buf, permuted_oob_id);
-		num_vote_loss_permuted_correct_class[tree_id][var_id] = nvcc;
-		
-		for(int k = 0; k < oob_id_omp.size(); ++k){
-			int sample_id = oob_id_omp[k];//predicte this OOB
-			int permuted_sample_id = permuted_oob_id[k];
-			//cout << sample_id +1 << "\t" << permuted_sample_id+1 << "\t";
-			
-			bool change = true;
-			round++;
-			if(var_id < nsnp && (!(geno64[var_id*3][bitloc[sample_id]] & MASK_offset[sample_id]) == !(geno64[var_id*3][bitloc[permuted_sample_id]] & MASK_offset[permuted_sample_id])) 
-				&& (!(geno64[var_id*3+1][bitloc[sample_id]] & MASK_offset[sample_id]) == !(geno64[var_id*3+1][bitloc[permuted_sample_id]] & MASK_offset[permuted_sample_id])) 
-				&& (!(geno64[var_id*3+2][bitloc[sample_id]] & MASK_offset[sample_id]) == !(geno64[var_id*3+2][bitloc[permuted_sample_id]] & MASK_offset[permuted_sample_id]))){
-				unchange++;	
-				change = false;
-				//cout << var_id+1 << " unchanged" << endl;
-				}else{
-					change = true;
-					//cout << var_id+1 << " changed" << endl;
-				}
-			
-			int fall_into_leaf_id = -1;
-			if(change){
-				PutDownPermutedOOB2Tree(sample_id, var_id, permuted_sample_id, root, fall_into_leaf_id);
-			}else{
-				fall_into_leaf_id = pred_leaf_id[tree_id][sample_id];
-			}
-			
-			if(fall_into_leaf_id >= 0 && fall_into_leaf_id < pointer_leaf.size()){
-				NODE &leaf = (*(pointer_leaf[fall_into_leaf_id]));
-				if(leaf.node_class == y[sample_id]){
-					num_vote_loss_permuted_correct_class[tree_id][var_id] -= 1;
-				}
-			}else{
-				cout << "Error: Cannot assign sample " << sample_id+1 << " to any leaf of the tree " << tree_id+1 << endl;
-				exit(1);
-			}
-		}
-	}
-	
-	//cout << "ratio of unchange = " << unchange * 1.0 / round << endl;
-	
-}
 
 void BAMBOO::DestroyTree(vector<NODE*> &pointer){
 
@@ -2245,6 +1985,7 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 	int ncase_omp;
 	
 	//generate bootstrap samples for a tree
+	//update class members oob_id64 and ib_id64, which will be used in prediction
 	Bootstrap(buf, y64_omp, not_y64_omp, in_sample64_omp, iter_omp, 
 	oob_id_omp, not_oob_id_omp, id_cnt_omp, ncase_omp);
 	
@@ -2259,7 +2000,7 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 	oob_size[tree_id] = oob_id_omp.size();
 	
 	vector<NODE*> all_allocate_node;//store the pointers of all allocated node
-	all_allocate_node.reserve(200);
+	all_allocate_node.reserve(min(nsub, 500));
 	vector<NODE*> pointer_leaf;//store the pointers of all leaves
 	pointer_leaf.reserve(max_nleaf);
 	vector<int> cont_lower(ncont, 0);//searching lower bound (index) of continuous covariates
@@ -2274,10 +2015,6 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 	ncase_omp, nsub-ncase_omp, sample_threshold, NULL, NULL, NULL);
 	pointer_leaf.push_back(root);
 	all_allocate_node.push_back(root);
-	
-	if(!var_id_used_in_tree[tree_id].empty()){
-		var_id_used_in_tree[tree_id].clear();
-	}
 	
 	while(pointer_leaf.size() < max_nleaf){
 		
@@ -2314,9 +2051,8 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 		
 		//cout << "split node " << node.node_id+1 << " with sample size " << node.N << endl;
 		
-		//update gini importance here, and print details
+		//print details
 		if(node.split_by == CODE_SNP){//split by SNP
-			gini_dec[tree_id][node.split_snp_id] += (float) max_stat * node.N;
 			
 			if(trace){
 				cout << "|| Split node " << node.node_id + (1) << " to nodes (" << node_id +1 + (1) << ", " 
@@ -2334,7 +2070,6 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 			}
 			
 		}else if(node.split_by == CODE_CONT){
-			gini_dec[tree_id][node.split_cont_id + nsnp] += (float) max_stat * node.N;
 			
 			if(trace){
 				cout << "|| Split node " << node.node_id + (1) << " to nodes (" << node_id +1 + (1) << ", " 
@@ -2343,17 +2078,16 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 			}
 			
 		}else if(node.split_by == CODE_CATE){
-			gini_dec[tree_id][node.split_cate_id + nsnp + ncont] += (float) max_stat * node.N;
 			
 			if(trace){
 				cout << "|| Split node " << node.node_id + (1) << " to nodes (" << node_id +1 + (1) << ", " 
 				<< node_id+2 + (1) << ") by categorical covariate " << node.split_cate_id + (1) << " (";
-				for(int ii = 0; ii < node.split_cate_left_string.size(); ++ii){
-					cout << node.split_cate_left_string[ii] << " ";
+				for(int ii = 0; ii < node.split_cate_left_code.size(); ++ii){
+					cout << cate_unique[node.split_cate_id][node.split_cate_left_code[ii]] << " ";
 				}
 				cout << "| ";
-				for(int ii = 0; ii < node.split_cate_right_string.size(); ++ii){
-					cout << node.split_cate_right_string[ii] << " ";
+				for(int ii = 0; ii < node.split_cate_right_code.size(); ++ii){
+					cout << cate_unique[node.split_cate_id][node.split_cate_right_code[ii]] << " ";
 				}
 				cout << ") Max stat = " << max_stat << endl;
 			}
@@ -2374,7 +2108,9 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 			cout << "Error: Invalid used var_id" << endl;
 			exit(1);
 		}
-		var_id_used_in_tree[tree_id].push_back(used_var);
+		
+		var_id_used_in_tree_long[used_var][bitloc_tree[tree_id]] |= MASK_offset_tree[tree_id];
+		var_id_used_in_tree_wide[tree_id][bitloc_var[used_var]] |= MASK_offset_var[used_var];
 		
 		////////
 		
@@ -2403,8 +2139,7 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 //		model[tree_id].push_back(md);
 		
 		//prepare for the child nodes
-		int max_cnt = node.sample_id64.size();
-		
+		int max_cnt = 0;
 		vector<bitvec > sample_id64_child1;
 		vector<bitvec > sample_id64_child2;
 		vector<int> sample_id_child1, sample_id_child2;
@@ -2412,6 +2147,7 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 		sample_id_child2.reserve(node.N_right);
 		
 		if(node.large_sample_size){//save memory
+			max_cnt = node.sample_id64.size();
 			sample_id64_child1 = node.sample_id64;
 			sample_id64_child2 = node.sample_id64;
 		}
@@ -2601,48 +2337,26 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 		pointer_leaf.push_back(pchild1);
 		pointer_leaf.push_back(pchild2);
 		
-		
-		//save memory?
-		if(!(node.sample_id64.empty())){
-			vector<bitvec >().swap(node.sample_id64);
-		}
-		
-		if(!sample_id64_child1.empty()){
-			vector<bitvec >().swap(sample_id64_child1);
-		}
-		
-		if(!sample_id64_child2.empty()){
-			vector<bitvec >().swap(sample_id64_child2);
-		}
-		
-		if(!(node.sample_id.empty())){
-			vector<int>().swap(node.sample_id);
-		}
-		
-		if(!sample_id_child1.empty()){
-			vector<int>().swap(sample_id_child1);
-		}
-		if(!sample_id_child2.empty()){
-			vector<int>().swap(sample_id_child2);
-		}
-		
 	}
 	
 	//discard duplicated var ids used by this tree
-	sort(var_id_used_in_tree[tree_id].begin(), var_id_used_in_tree[tree_id].end());
-	vector<int> vid;
-	vid.reserve(500);
-	vid.push_back(var_id_used_in_tree[tree_id][0]);
-	int v = var_id_used_in_tree[tree_id][0];
-	for(int i = 1; i < var_id_used_in_tree[tree_id].size(); ++i){
-		if(var_id_used_in_tree[tree_id][i] != v){
-			v = var_id_used_in_tree[tree_id][i];
-			vid.push_back(v);
-		}
-	}
-	var_id_used_in_tree[tree_id] = vid;
+	//addnew
+	//as var_id_used_in_tree will be save in 64-bit, the following part is unnecessary
+//	sort(var_id_used_in_tree[tree_id].begin(), var_id_used_in_tree[tree_id].end());
+//	vector<int> vid;
+//	vid.reserve(500);
+//	vid.push_back(var_id_used_in_tree[tree_id][0]);
+//	int v = var_id_used_in_tree[tree_id][0];
+//	for(int i = 1; i < var_id_used_in_tree[tree_id].size(); ++i){
+//		if(var_id_used_in_tree[tree_id][i] != v){
+//			v = var_id_used_in_tree[tree_id][i];
+//			vid.push_back(v);
+//		}
+//	}
+//	var_id_used_in_tree[tree_id] = vid;
 	
 	//refine the model structure
+	//make sure that all leaves are correctly tagged
 	for(int i = 0; i < pointer_leaf.size(); ++i){
 		NODE &node = *(pointer_leaf[i]);
 		node.processed = true;
@@ -2668,16 +2382,20 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 //		}
 	}
 	
-	AssignSample(*root, pointer_leaf);
+	//addnew
+	//I will compute oob err after all bamboo are grown
+//	AssignSample(*root, pointer_leaf);
+//	
+//	AssignOOB(oob_id_omp, tree_id);
+//	
+//	if(imp_measure == IMP_BREIMAN_CUTLER || imp_measure == IMP_LIAW_WIENER){
+//		AssignPermutedOOB(buf, *root, pointer_leaf, oob_id_omp);
+//	}
 	
-	AssignOOB(oob_id_omp, tree_id);
-	
-	if(imp_measure == IMP_BREIMAN_CUTLER || imp_measure == IMP_LIAW_WIENER){
-		AssignPermutedOOB(buf, *root, pointer_leaf, oob_id_omp);
-	}
-	
-	/////prepare to save model to local file
-	
+	//prepare to save model to local file
+	//prevent using pointers in saved object
+	//I will create a vector of MINI_NODE to save each bamboo
+	//using integer indexes to specify the relationship between mini nodes
 	for(int i = 0; i < all_allocate_node.size(); ++i){
 		NODE &node = *(all_allocate_node[i]);
 		node.iparent = node.parent ? (*(node.parent)).node_id : -1;
@@ -2689,10 +2407,11 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 		bamboo[tree_id].clear();
 	}
 	
-	bamboo[tree_id] = vector<NODE> (all_allocate_node.size());
+	bamboo[tree_id] = vector<MINI_NODE> (all_allocate_node.size());
 	for(int i = 0; i < all_allocate_node.size(); ++i){
-		bamboo[tree_id][i] = (*(all_allocate_node[i]));
-		if(!( bamboo[tree_id][i] == (*(all_allocate_node[i])) )){
+		MINI_NODE mini_node(*(all_allocate_node[i]));
+		bamboo[tree_id][i] = mini_node;
+		if(!( bamboo[tree_id][i] == mini_node )){
 			cout << i+1 << " node not equal" << endl;
 		}
 	}
@@ -2704,154 +2423,138 @@ void BAMBOO::GrowTree(drand48_data &buf, const int tree_id){
 		cout << "The tree is grown and destroyed" << endl;
 	}
 	
+	//check_out == true if a thead has create bamboo for the specified tree_id
+	//with this tag, we can update the progress bar
 	check_out[tree_id] = true;
 		
 }
 
-
-void BAMBOO::CompOOBErrorSingleProc(const int forest_size){
+void BAMBOO::PrintProgress(){
 	
-	oob_error[forest_size - 1] = .0;
-	bool at_least_one_oob_in_forest = false;
-	int eff_nsub = 0;
-	oob_prediction = vector<int> (nsub, -1);
+	int completed_jobs = 0;
+	for(int i = 0; i < check_out.size(); ++i){
+		completed_jobs += check_out[i];
+	}
+	int prg = (int) (completed_jobs * 1.0 / ntree * 100);
 	
-	for(int i = 0; i < nsub; ++i){
-		double risk0 = .0;
-		double risk1 = .0;
-		for(int j = 0; j < forest_size; ++j){
-			int pc = pred_oob_class[j][i];
-			if(pc == 0 || pc == 1){//the sample i is oob of tree j
-				risk0 += pred_risk_ctrl[j][i];
-				risk1 += pred_risk_case[j][i];
-			}
+	cout << "\033[?25l\033[0m| ";
+	for(int i = 1; i <= 100; ++i){
+		if(i <= prg && i % 2 == 0){
+			cout << "\033[?25l\033[47m\033[1m ";
 		}
-		
-		if(risk0 > .0 || risk1 > .0){
-			at_least_one_oob_in_forest = true;
-			++eff_nsub;
-			int mvc = (risk1 > risk0) ? 0 : 1;//class by major vote
-			oob_prediction[i] = mvc;
-			
-			if(mvc != y[i]){//incorrect prediction
-				oob_error[forest_size - 1] += 1.0;
-			}
-		}else{//sample i is not oob of any of the trees in the forest
-			//do something
+		if(i == prg){
+			cout << "\033[0m " << prg << "% ";
+		}
+		if(i > prg && i % 2 == 0){
+			cout << " ";
 		}
 	}
-	
-	oob_error[forest_size - 1] /= eff_nsub;
-	
-	if(!at_least_one_oob_in_forest){//no oob for this whole forest
-		oob_error[forest_size - 1] = -1.0;
-	}
-	
-	cout << "\033[?25l\r\033[K\rThe OOB Error over " << forest_size << " trees is " << oob_error[forest_size - 1] << flush;
-	
+	cout << "|\r" << flush;
 	
 }
 
-
-void BAMBOO::CompOOBErrorMultiProc(){
+void BAMBOO::GrowForestMultiProc(){
 	
-	oob_error = vector<double> (ntree, .0);
-	vector<double> risk0 (nsub, .0);
-	vector<double> risk1 (nsub, .0);
-	oob_prediction = vector<int> (nsub, -1);
-	for(int j = 0; j < ntree; ++j){
-		bool at_least_one_oob_in_forest = false;
-		int eff_nsub = 0;
-		
-		for(int i = 0; i < nsub; ++i){
-			int pc = pred_oob_class[j][i];
-			if(pc == 0 || pc == 1){//the sample i is oob of tree j
-				risk0[i] += pred_risk_ctrl[j][i];
-				risk1[i] += pred_risk_case[j][i];
-			}
-			
-			if(risk0[i] > .0 || risk1[i] > .0){
-				at_least_one_oob_in_forest = true;
-				++eff_nsub;
-				int mvc = (risk1[i] > risk0[i]) ? 0 : 1;//class by major vote
-				if(j == ntree-1){
-					oob_prediction[i] = mvc;
-				}
-				if(mvc != y[i]){//incorrect prediction
-					oob_error[j] += 1.0;
-				}
-			}else{//sample i is not oob of any of the trees in the forest
-				//do something
-			}
-		}
-		
-		oob_error[j] /= eff_nsub;
-		
-		if(!at_least_one_oob_in_forest){//no oob for this whole forest
-			oob_error[j] = -1.0;
-		}
-	}
+	drand48_data buf;
 	
-}
-
-void BAMBOO::WriteOOBError(){
-	
-	ofstream file_err;
-	file_err.open(path_err);
-	file_err << "TREE_ID\tOOB_ERROR" << endl;
-	for(int i = 0; i < oob_error.size(); ++i){
-		file_err << i+1 << "\t" << oob_error[i] << endl;
-	}
-	file_err.close();
-	
-	cout << "The OOB errors have been saved in [ " << path_err << " ]" << endl;
-	
-}
-
-void BAMBOO::CompConfusionMatrix(){
-	
-	confusion_matrix = vector<vector<int> > (2, vector<int> (2, 0));
-	for(int i = 0; i < nsub; ++i){
-		if(y[i] == 0 && oob_prediction[i] == 0){
-			confusion_matrix[0][0] += 1;
-		}else if(y[i] == 0 && oob_prediction[i] == 1){
-			confusion_matrix[0][1] += 1;
-		}else if(y[i] == 1 && oob_prediction[i] == 0){
-			confusion_matrix[1][0] += 1;
-		}else if(y[i] == 1 && oob_prediction[i] == 1){
-			confusion_matrix[1][1] += 1;
+	#pragma omp parallel num_threads(nthread) private(buf)
+	{
+		if(seed < 0){
+			srand48_r(time(NULL) + omp_get_thread_num(), &buf);
 		}else{
-			//if ntree is too small, there might be some oob_prediction = -1
-			//don't worry about that, do nothing here
+			srand48_r(seed + omp_get_thread_num(), &buf);
+		}
+		
+		#pragma omp for
+		for(int i = 0; i < ntree; ++i){
+			
+			GrowTree(buf, i);
+			
+			int tid = omp_get_thread_num();
+			if(tid == 0){
+				PrintProgress();
+			}
 		}
 	}
 	
-	cout << "Confusion matrix of oob samples (rows / cols: true / pred classes)" << endl;
-	cout << "       \tControl\tCase   \tError  " << endl;
-	cout << "Control\t" << confusion_matrix[0][0] << "\t" << confusion_matrix[0][1] << "\t" << confusion_matrix[0][1] * 1.0 / nctrl << "\t(1-Specificity)" << endl;
-	cout << "Case   \t" << confusion_matrix[1][0] << "\t" << confusion_matrix[1][1] << "\t" << confusion_matrix[1][0] * 1.0 / ncase << "\t(1-Sensitivity)" << endl;
-	cout << "       \t       \t       \t";
-	cout << (confusion_matrix[0][1] + confusion_matrix[1][0]) * 1.0 / (confusion_matrix[0][0] + confusion_matrix[0][1] + confusion_matrix[1][0] + confusion_matrix[1][1]) << endl;
+	cout << "\r\033[K\r\033[0m\033[?25h\r";
 	
-	ofstream file_cof;
-	file_cof.open(path_cof);
-	file_cof << "Confusion matrix of oob samples (rows / cols: true / pred classes)" << endl;
-	file_cof << "       \tControl\tCase   \tError  " << endl;
-	file_cof << "Control\t" << confusion_matrix[0][0] << "\t" << confusion_matrix[0][1] << "\t" << confusion_matrix[0][1] * 1.0 / nctrl << "\t(1-Specificity)" << endl;
-	file_cof << "Case   \t" << confusion_matrix[1][0] << "\t" << confusion_matrix[1][1] << "\t" << confusion_matrix[1][0] * 1.0 / ncase << "\t(1-Sensitivity)" << endl;
-	file_cof << "       \t       \t       \t";
-	file_cof << (confusion_matrix[0][1] + confusion_matrix[1][0]) * 1.0 / (confusion_matrix[0][0] + confusion_matrix[0][1] + confusion_matrix[1][0] + confusion_matrix[1][1]) << endl;
-	file_cof.close();
-	
-	cout << "The confusion matrix is saved in [ " << path_cof << " ]" << endl;
-	
+	time_t bamboo_fitted_time;
+	time(&bamboo_fitted_time);
+	cout << "Bamboo fitted: " << ctime(&bamboo_fitted_time);
 	
 }
 
-void BAMBOO::CompProximity(){
+
+void BAMBOO::SaveBamboo(){
+	
+	if(!output_bamboo){
+		return;
+	}
+	
+	//figure out which variables are involved in the final forest
+	//this list will be useful to loading test dataset for prediction
+	//they are saved to local file as well
+	snp_used_in_forest.clear();
+	snp_id_used_in_forest.clear();
+	cont_var_used_in_forest.clear();
+	cont_var_id_used_in_forest.clear();
+	cate_var_used_in_forest.clear();
+	cate_var_id_used_in_forest.clear();
+	
+	for(int i = 0; i < nvar; ++i){
+		for(int j = 0; j < nblock_tree; ++j){
+			if(var_id_used_in_tree_long[i][j]){//var i is used in at least one bamboo
+				if(i < nsnp){//a snp is used
+					snp_id_used_in_forest.push_back(i);
+					snp_used_in_forest.push_back(snp_name[i]);
+				}else if(i < nsnp + ncont){//a continuous covariate is used
+					cont_var_id_used_in_forest.push_back(i - nsnp);
+					cont_var_used_in_forest.push_back(cont_var_name[i - nsnp]);
+				}else if(i < nvar){
+					cate_var_id_used_in_forest.push_back(i - nsnp - ncont);
+					cate_var_used_in_forest.push_back(cate_var_name[i - nsnp - ncont]);
+				}else{//impossible
+					cout << "Error: Invalid var_id in SaveBamboo" << endl;
+					exit(1);
+				}
+				break;
+			}
+		}
+	}
+	
+	{//save forest to local file
+		ofstream ofs(path_bam);
+		boost::archive::binary_oarchive ar(ofs);
+			
+		ar & version;
+		ar & nsnp & ncont & ncate;
+		ar & snp_used_in_forest & snp_id_used_in_forest;
+		ar & cont_var_used_in_forest & cont_var_id_used_in_forest;
+		ar & cate_var_used_in_forest & cate_var_id_used_in_forest;
+		ar & bamboo;
+	}
+	cout << "Bamboo has been saved in [ " << path_bam << " ]" << endl;
+	
+}
+
+
+void BAMBOO::ComputeProximity(){
 	
 	if(!output_prox){
 		return;
+	}
+	
+	for(int j = 0; j < ntree; ++j){
+		for(int i = 0; i < nsub; ++i){
+			int fall_into_node_id = -1;
+			PutDownSampleToTree(i, bamboo[j], fall_into_node_id);
+			if(fall_into_node_id < 0 || fall_into_node_id >= bamboo[j].size()){
+				cout << "Error: Invalid node id in ComputeProximity" << endl;
+				exit(1);
+			}
+			pred_node_id[j][i] = (uint16) fall_into_node_id;
+		}
 	}
 	
 	//pair proximity
@@ -2862,7 +2565,7 @@ void BAMBOO::CompProximity(){
 		for(int j = i+1; j < nsub; ++j){
 			prox[i][j] = (uint16) 0;//set as 0. Not necessary but just in case
 			for(int k = 0; k < ntree; ++k){
-				if(pred_leaf_id[k][i] == pred_leaf_id[k][j]){//two samples fall into the same leaf
+				if(pred_node_id[k][i] == pred_node_id[k][j]){//two samples fall into the same leaf
 					prox[i][j] += (uint16) 1;
 				}
 			}
@@ -2901,14 +2604,139 @@ void BAMBOO::CompProximity(){
 	
 }
 
-void BAMBOO::CompGiniImportance(){
+
+void BAMBOO::WriteOOBError(){
+	
+	ofstream file_err;
+	file_err.open(path_err);
+	file_err << "TREE_ID\tOOB_ERROR" << endl;
+	for(int i = 0; i < oob_error.size(); ++i){
+		file_err << i+1 << "\t" << oob_error[i] << endl;
+	}
+	file_err.close();
+	
+	cout << "The OOB errors have been saved in [ " << path_err << " ]" << endl;
+	
+}
+
+void BAMBOO::ComputeOOBError(){
+	
+	oob_error = vector<double> (ntree, .0);//cumulative oob error with increasing number of trees
+	oob_prediction = vector<int> (nsub, -1);//final prediction for oob samples
+	vector<double> risk_ctrl (nsub, .0);
+	vector<double> risk1_case (nsub, .0);
+	
+	for(int j = 0; j < ntree; ++j){
+		bool at_least_one_oob_in_forest = false;
+		int eff_nsub = 0;//effective sample size (of oob) for top j trees
+		
+		for(int i = 0; i < nsub; ++i){
+			if(oob_id64[j][bitloc[i]] & MASK_offset[i]){
+				at_least_one_oob_in_forest = true;
+				++eff_nsub;
+				int fall_into_node_id = -1;
+				if(output_prox){
+					fall_into_node_id = (int) pred_node_id[j][i];
+				}else{
+					PutDownSampleToTree(i, bamboo[j], fall_into_node_id);
+				}
+				
+				MINI_NODE &leaf = bamboo[j][fall_into_node_id];
+				risk_ctrl[i] += leaf.node_risk_ctrl;
+				risk_case[i] += leaf.node_risk_case;
+				
+				//?? is the condition here reasonable? should we used cut-off here?
+				int mvc = (risk_case[i] > risk_ctrl[i]) ? 0 : 1;//predicted class by major vote
+				if(j == ntree - 1){
+					oob_prediction[i] = mvc;//final prediction using all tree with sample i as oob sample
+				}
+				
+				if(mvc != y[i]){//incorrect prediction
+					oob_error[j] += 1.0;
+				}
+			}
+		}
+		
+		oob_error[j] /= eff_nsub;
+		if(!at_least_one_oob_in_forest){//no oob for this whole forest
+			oob_error[j] = -1.0;
+		}
+	}
+	
+	WriteOOBError();
+	
+}
+
+
+void BAMBOO::ComputeConfusionMatrix(){
+	
+	confusion_matrix = vector<vector<int> > (2, vector<int> (2, 0));
+	for(int i = 0; i < nsub; ++i){
+		if(y[i] == 0 && oob_prediction[i] == 0){
+			confusion_matrix[0][0] += 1;
+		}else if(y[i] == 0 && oob_prediction[i] == 1){
+			confusion_matrix[0][1] += 1;
+		}else if(y[i] == 1 && oob_prediction[i] == 0){
+			confusion_matrix[1][0] += 1;
+		}else if(y[i] == 1 && oob_prediction[i] == 1){
+			confusion_matrix[1][1] += 1;
+		}else{
+			//if ntree is too small, there might be some oob_prediction = -1
+			//don't worry about that, do nothing here
+			cout << "Warning: The confusion matrix might be inaccurate due to small --ntree" << endl;
+		}
+	}
+	
+	cout << "Confusion matrix of oob samples (rows / cols: true / pred classes)" << endl;
+	cout << "       \tControl\tCase   \tError  " << endl;
+	cout << "Control\t" << confusion_matrix[0][0] << "\t" << confusion_matrix[0][1] << "\t" << confusion_matrix[0][1] * 1.0 / nctrl << "\t(1-Specificity)" << endl;
+	cout << "Case   \t" << confusion_matrix[1][0] << "\t" << confusion_matrix[1][1] << "\t" << confusion_matrix[1][0] * 1.0 / ncase << "\t(1-Sensitivity)" << endl;
+	cout << "       \t       \t       \t";
+	cout << (confusion_matrix[0][1] + confusion_matrix[1][0]) * 1.0 / (confusion_matrix[0][0] + confusion_matrix[0][1] + confusion_matrix[1][0] + confusion_matrix[1][1]) << endl;
+	
+	ofstream file_cof;
+	file_cof.open(path_cof);
+	file_cof << "Confusion matrix of oob samples (rows / cols: true / pred classes)" << endl;
+	file_cof << "       \tControl\tCase   \tError  " << endl;
+	file_cof << "Control\t" << confusion_matrix[0][0] << "\t" << confusion_matrix[0][1] << "\t" << confusion_matrix[0][1] * 1.0 / nctrl << "\t(1-Specificity)" << endl;
+	file_cof << "Case   \t" << confusion_matrix[1][0] << "\t" << confusion_matrix[1][1] << "\t" << confusion_matrix[1][0] * 1.0 / ncase << "\t(1-Sensitivity)" << endl;
+	file_cof << "       \t       \t       \t";
+	file_cof << (confusion_matrix[0][1] + confusion_matrix[1][0]) * 1.0 / (confusion_matrix[0][0] + confusion_matrix[0][1] + confusion_matrix[1][0] + confusion_matrix[1][1]) << endl;
+	file_cof.close();
+	
+	cout << "The confusion matrix is saved in [ " << path_cof << " ]" << endl;
+	
+	
+}
+
+
+void BAMBOO::ComputeGiniImportance(){
+	
+	for(int t = 0; t < ntree; ++t){
+		for(int k = 0; k < bamboo[t].size(); ++k){
+			MINI_NODE &mini_node = bamboo[t][k];
+			if(mini_node.terminal){//leaf isn't counted in computing gini importance
+				continue;
+			}
+			
+			int var_id = -1;
+			int split_by = mini_node.split_by;
+			if(split_by == CODE_SNP){
+				var_id = mini_node.split_snp_id;
+			}else if(split_by == CODE_CONT){
+				var_id = mini_node.split_cont_id + nsnp;
+			}else if(spli_by == CODE_CATE){
+				var_id = min_node.split_cate_id + nsnp + ncont;
+			}else{//impossible
+				cout << "Error: Invalid var_id in ComputeGiniImportance" << endl;
+				exit(1);
+			}
+			importance[var_id].imp_gini += (float) mini_node.split_stat * mini_node.N;
+		}
+	}
 	
 	for(int i = 0; i < nvar; ++i){
 		int var_id = importance[i].var_id;
-		importance[var_id].imp_gini = (float) .0;//initialization
-		for(int j = 0; j < ntree; ++j){
-			importance[var_id].imp_gini += gini_dec[j][var_id];
-		}
 		importance[var_id].imp_gini /= ntree;
 		
 		if(imp_measure == IMP_NULL || imp_measure == IMP_GINI){
@@ -2918,7 +2746,8 @@ void BAMBOO::CompGiniImportance(){
 	
 }
 
-void BAMBOO::CompPermutationImportance(){
+//??I need to think about it
+void BAMBOO::ComputePermutationImportance(){
 	
 	if(imp_measure == IMP_NULL || imp_measure == IMP_GINI){
 		return;
@@ -2955,6 +2784,7 @@ void BAMBOO::CompPermutationImportance(){
 	
 }
 
+
 void BAMBOO::WriteImportance(){
 	
 	if(!output_imp){
@@ -2979,7 +2809,7 @@ void BAMBOO::WriteImportance(){
 		}else if(var_id < nvar){
 			file_imp << i+1 << "\tCAT_" << var_id+1-nsnp-ncont << "\t" << cate_var_name[var_id-nsnp-ncont] << "\t";
 		}else{
-			cout << "Error: Invalid index in writing [ " << path_imp << " ]" << endl;
+			cout << "Error: Invalid var id in writing [ " << path_imp << " ]" << endl;
 			exit(1);
 		}
 		file_imp << "\t" << importance[i].imp_gini;
@@ -3017,163 +2847,17 @@ void BAMBOO::WriteImportance(){
 	
 }
 
+
 void BAMBOO::CompImportance(){
 	
-	CompGiniImportance();
+	ComputeGiniImportance();
 	
-	CompPermutationImportance();
+	ComputePermutationImportance();
 	
 	WriteImportance();
 	
 }
 
-void BAMBOO::PrintProgress(){
-	
-	int completed_jobs = 0;
-	for(int i = 0; i < check_out.size(); ++i){
-		completed_jobs += check_out[i];
-	}
-	int prg = (int) (completed_jobs * 1.0 / ntree * 100);
-	
-	cout << "\033[?25l\033[0m| ";
-	for(int i = 1; i <= 100; ++i){
-		if(i <= prg && i % 2 == 0){
-			cout << "\033[?25l\033[47m\033[1m ";
-		}
-		if(i == prg){
-			cout << "\033[0m " << prg << "% ";
-		}
-		if(i > prg && i % 2 == 0){
-			cout << " ";
-		}
-	}
-	cout << "|\r" << flush;
-	
-}
-
-void BAMBOO::GrowForestSingleProc(){
-	
-//	clock_t start, end;
-//	start = clock();
-	
-	drand48_data buf;
-	
-	if(seed < 0){
-		srand48_r(time(NULL), &buf);
-	}else{
-		srand48_r(seed, &buf);
-	}
-	
-	for(int i = 0; i < ntree; ++i){
-		GrowTree(buf, i);
-		CompOOBErrorSingleProc(i+1);//size of forest
-	}
-	cout << "\033[0m\033[?25h" << endl;
-	
-	time_t bamboo_fitted_time;
-	time(&bamboo_fitted_time);
-	cout << "Bamboo fitted: " << ctime(&bamboo_fitted_time);
-	
-//	end = clock();
-//	cout << "Elapsed time: " << ((float) (end - start))/CLOCKS_PER_SEC << " sec" << endl;
-	
-}
-
-void BAMBOO::GrowForestMultiProc(){
-	
-	drand48_data buf;
-	
-	#pragma omp parallel num_threads(nthread) private(buf)
-	{
-		if(seed < 0){
-			srand48_r(time(NULL) + omp_get_thread_num(), &buf);
-		}else{
-			srand48_r(seed + omp_get_thread_num(), &buf);
-		}
-		
-		#pragma omp for
-		for(int i = 0; i < ntree; ++i){
-			
-			GrowTree(buf, i);
-			
-			int tid = omp_get_thread_num();
-			if(tid == 0){
-				PrintProgress();
-			}
-		}
-	}
-	
-	cout << "\r\033[K\r\033[0m\033[?25h\r";
-	
-	time_t bamboo_fitted_time;
-	time(&bamboo_fitted_time);
-	cout << "Bamboo fitted: " << ctime(&bamboo_fitted_time);
-	
-	CompOOBErrorMultiProc();
-	
-}
-
-void BAMBOO::SaveBamboo(){
-	
-	if(!output_bamboo){
-		return;
-	}
-	
-	//figure out which variables are involved in the final forest
-	//this list will be useful to loading test dataset for prediction
-	vector<int> vid;
-	for(int t = 0; t < ntree; ++t){
-		for(int j = 0; j < var_id_used_in_tree[t].size(); ++j){
-			vid.push_back(var_id_used_in_tree[t][j]);
-		}
-	}
-	sort(vid.begin(), vid.end());
-	
-	//snp_used_in_forest, cont_var_used_in_forest and cate_var_used_in_forest
-	//will be save to local file
-	
-	snp_used_in_forest.clear();
-	snp_id_used_in_forest.clear();
-	cont_var_used_in_forest.clear();
-	cont_var_id_used_in_forest.clear();
-	cate_var_used_in_forest.clear();
-	cate_var_id_used_in_forest.clear();
-	
-	vector<int> unique_vid;
-	int v = -1;
-	for(int i = 0; i < vid.size(); ++i){
-		if(vid[i] != v){
-			v = vid[i];
-			if(v < nsnp){
-				snp_used_in_forest.push_back(snp_name[v]);
-				snp_id_used_in_forest.push_back(v);
-			}else if(v < nsnp + ncont){
-				cont_var_used_in_forest.push_back(cont_var_name[v - nsnp]);
-				cont_var_id_used_in_forest.push_back(v - nsnp);
-			}else if(v < nsnp + ncont + ncate){
-				cate_var_used_in_forest.push_back(cate_var_name[v - nsnp - ncont]);
-				cate_var_id_used_in_forest.push_back(v - nsnp - ncont);
-			}else{
-				cout << "Error: Invalid entry in var_id_used_in_tree" << endl;
-				exit(1);
-			}
-		}
-	}
-	
-	{//save forest to local file
-		ofstream ofs(path_bam);
-		boost::archive::binary_oarchive ar(ofs);
-			
-		ar & version;
-		ar & nsnp & ncont & ncate;
-		ar & snp_used_in_forest & snp_id_used_in_forest;
-		ar & cont_var_used_in_forest & cont_var_id_used_in_forest;
-		ar & cate_var_used_in_forest & cate_var_id_used_in_forest;
-		ar & bamboo;
-	}
-	cout << "Bamboo has been saved in [ " << path_bam << " ]" << endl;
-	
-}
 
 void BAMBOO::GrowForest(){
 	
@@ -3184,26 +2868,27 @@ void BAMBOO::GrowForest(){
 	time_t start, end;
 	start = time(NULL);
 	
-	if(nthread == 1){
-		GrowForestSingleProc();
-	}else if(nthread > 1){
-		GrowForestMultiProc();
-	}else{
-		cout << "Error: Invalid number of thread(s)" << endl;
+	if(nthread > sysconf( _SC_NPROCESSORS_ONLN ) || nthread < 1){
+		cout << "Error: Invalid number of threads (" << nthread << ")" << endl;
 		exit(1);
 	}
+	
+	GrowForestMultiProc();
 	
 	end = time(NULL);
 	cout << "Elapsed time: " << (end - start) / 3600 << "h " << ((end - start) % 3600) / 60 << "m " << (end - start) % 60 << "s" << endl;
 	
-	WriteOOBError();
-	CompConfusionMatrix();
-	
-	CompProximity();
-	
-	CompImportance();
-	
 	SaveBamboo();
+	
+	ComputeProximity();
+	
+	ComputeOOBError();
+	
+	ComputeConfusionMatrix();
+	
+	ComputeImportance();
+	
+	
 	
 	end = time(NULL);
 	cout << "Elapsed time: " << (end - start) / 3600 << "h " << ((end - start) % 3600) / 60 << "m " << (end - start) % 60 << "s" << endl;
@@ -3213,6 +2898,7 @@ void BAMBOO::GrowForest(){
 	cout << "Finished: " << ctime(&complete_time);
 	
 }
+
 
 void BAMBOO::LoadBamboo(){
 	
@@ -3243,685 +2929,6 @@ void BAMBOO::LoadBamboo(){
 	
 }
 
-void BAMBOO::LoadTestingData(){
-	
-	if(!(pred_from_specified_model || pred_from_trained_model)){
-		return;
-	}
-	
-	ifstream file_fam(path_fam_test);
-	if(!file_fam){
-		cout << "Error: Cannot open FAM file " << path_fam_test << " for prediction" << endl;
-		exit(1);
-	}
-	
-	vector<string> individual_id_fam;
-	vector<int> index_individual_id_fam;
-	int nsub_fam = 0;
-	for(string s; getline(file_fam, s); ){
-		istringstream sin(s);
-		string fam_id, ind_id, pat_id, mat_id, sex;
-		int phen;
-		if(sin >> fam_id >> ind_id >> pat_id >> mat_id >> sex >> phen){
-			++nsub_fam;
-			individual_id_fam.push_back(ind_id);
-			index_individual_id_fam.push_back(nsub_fam-1);
-		}else{
-			cout << "Error" << endl;
-			exit(1);
-		}
-	}
-	file_fam.close();
-	
-	//load continuous covariates
-	vector<string> individual_id_cont;
-	vector<int> index_individual_id_cont;
-	vector<bool> cont_used;
-	vector<int> cont_col;
-	int nsub_cont = 0;
-	
-	if(has_cont){
-		ifstream file_cont(path_cont_test);
-		if(!file_cont){
-			cout << "Error: Cannot open CON file " << path_cont_test << " for predicton" << endl;
-			exit(1);
-		}
-		
-		string missing_flag("NA");
-		vector<string> header;
-		int nrow = -2;
-		for(string s; getline(file_cont, s); ){
-			istringstream sin(s);
-			++nrow;
-			if(nrow == -1){
-				string ind_id;
-				sin >> ind_id;
-				string h;
-				while(sin >> h){
-					header.push_back(h);
-				}
-				
-				if(header.size() < cont_var_used_in_forest.size()){
-					cout << "Error: Cannot find all necessary covariates from " << path_cont_test << endl;
-					exit(1);
-				}
-				
-				cont_used = vector<bool> (header.size(), false);
-				cont_col = vector<int> (header.size(), -1);
-				
-				for(int i = 0; i < cont_var_used_in_forest.size(); ++i){
-					string str = cont_var_used_in_forest[i];
-					bool b = false;
-					for(int j = 0; j < header.size(); ++j){
-						if(str == header[j]){
-							b = true;
-							cont_used[j] = true;
-							cont_col[j] = cont_var_id_used_in_forest[i];
-							break;
-						}
-					}
-					if(!b){
-						cout << "Error: Cannot find covariate " << str << " in " << path_cont_test << endl;
-						file_cont.close();
-						exit(1);
-					}
-				}
-			}else{
-				++nsub_cont;
-				bool no_missing_this_row = true;
-				string iid, str;
-				sin >> iid;
-				int j = -1;
-				while(sin >> str){
-					++j;
-					if(cont_used[j] && str == missing_flag){
-						no_missing_this_row = false;
-						break;
-					}
-				}
-				if(no_missing_this_row){
-					individual_id_cont.push_back(iid);
-					index_individual_id_cont.push_back(nrow);
-				}
-			}
-		}
-		file_cont.close();
-	}
-	
-	
-	//load categorical covariates
-	vector<string> individual_id_cate;
-	vector<int> index_individual_id_cate;
-	vector<bool> cate_used;
-	vector<int> cate_col;
-	int nsub_cate = 0;
-	
-	if(has_cate){
-		ifstream file_cate(path_cate_test);
-		if(!file_cate){
-			cout << "Error: Cannot find " << path_cate_test << endl;
-			exit(1);
-		}
-		
-		string missing_flag("NA");
-		vector<string> header;
-		int nrow = -2;
-		for(string s; getline(file_cate, s); ){
-			istringstream sin(s);
-			++nrow;
-			if(nrow == -1){
-				string ind_id;
-				sin >> ind_id;
-				string h;
-				while(sin >> h){
-					header.push_back(h);
-				}
-				
-				if(header.size() < cate_var_used_in_forest.size()){
-					cout << "Error: Cannot find all necessary covariates from " << path_cate_test << endl;
-					exit(1);
-				}
-				
-				cate_used = vector<bool> (header.size(), false);
-				cate_col = vector<int> (header.size(), -1);
-				
-				for(int i = 0; i < cate_var_used_in_forest.size(); ++i){
-					string str = cate_var_used_in_forest[i];
-					bool b = false;
-					for(int j = 0; j < header.size(); ++j){
-						if(str == header[j]){
-							b = true;
-							cate_used[j] = true;
-							cate_col[j] = cate_var_id_used_in_forest[i];
-							break;
-						}
-					}
-					if(!b){
-						cout << "Error: Cannot find covariate " << str << " in " << path_cate_test << endl;
-						file_cate.close();
-						exit(1);
-					}
-				}
-			}else{
-				++nsub_cate;
-				bool no_missing_this_row = true;
-				string iid, str;
-				sin >> iid;
-				int j = -1;
-				while(sin >> str){
-					++j;
-					if(cate_used[j] && str == missing_flag){
-						no_missing_this_row = false;
-						break;
-					}
-				}
-				if(no_missing_this_row){
-					individual_id_cate.push_back(iid);
-					index_individual_id_cate.push_back(nrow);
-				}
-			}
-		}
-		file_cate.close();
-	}
-	
-	//determine intersection
-	vector<int> index_individual_id_fam_inc;
-	vector<int> index_individual_id_cont_inc;
-	vector<int> index_individual_id_cate_inc;
-	individual_id_test.clear();
-	
-	if(!has_cont && !has_cate){
-		individual_id_test = individual_id_fam;
-		index_individual_id_fam_inc = index_individual_id_fam;
-	}else{
-		if(!has_cate){
-			string str;
-			for(int i = 0; i < individual_id_fam.size(); ++i){
-				str = individual_id_fam[i];
-				for(int j = 0; j < individual_id_cont.size(); ++j){
-					if(str == individual_id_cont[j]){
-						individual_id_test.push_back(str);
-						index_individual_id_fam_inc.push_back(index_individual_id_fam[i]);
-						index_individual_id_cont_inc.push_back(index_individual_id_cont[j]);
-						break;
-					}
-				}
-			}
-		}else if(!has_cont){
-			string str;
-			for(int i = 0; i < individual_id_fam.size(); ++i){
-				str = individual_id_fam[i];
-				for(int j = 0; j < individual_id_cate.size(); ++j){
-					if(str == individual_id_cate[j]){
-						individual_id_test.push_back(str);
-						index_individual_id_fam_inc.push_back(index_individual_id_fam[i]);
-						index_individual_id_cate_inc.push_back(index_individual_id_cate[j]);
-						break;
-					}
-				}
-			}
-		}else{
-			string str;
-			for(int i = 0; i < individual_id_fam.size(); ++i){
-				str = individual_id_fam[i];
-				bool in_cont = false;
-				int j1 = -1;
-				for(int j = 0; j < individual_id_cont.size(); ++j){
-					if(str == individual_id_cont[j]){
-						in_cont = true;
-						j1 = j;
-						break;
-					}
-				}
-				
-				if(!in_cont){
-					continue;
-				}
-				
-				bool in_cate = false;
-				int j2 = -1;
-				for(int j = 0; j < individual_id_cate.size(); ++j){
-					if(str == individual_id_cate[j]){
-						in_cate = true;
-						j2 = j;
-						break;
-					}
-				}
-				
-				if(in_cont && in_cate){
-					individual_id_test.push_back(str);
-					index_individual_id_fam_inc.push_back(index_individual_id_fam[i]);
-					index_individual_id_cont_inc.push_back(index_individual_id_cont[j1]);
-					index_individual_id_cate_inc.push_back(index_individual_id_cate[j2]);
-				}
-			}
-		}
-	}
-	
-	nsub_test = individual_id_test.size();
-	if(nsub_test == 0){
-		cout << "Sample size of test dataset is 0. The program terminated" << endl;
-		exit(1);
-	}
-	
-	ifstream file_bim(path_bim_test);
-	if(!file_bim){
-		cout << "Error: Cannot open BIM file " << path_bim_test << endl;
-		exit(1);
-	}
-	
-	
-	int nsnp_test = 0;
-	vector<string> snp_name_test;
-	for(string s; getline(file_bim, s); ){
-		istringstream sin(s);
-		string chr, rs, allele_name1, allele_name2;
-		int genetic_dist, base_pair_pos;
-		if(sin >> chr >> rs >> genetic_dist >> base_pair_pos >> allele_name1 >> allele_name2){
-			++nsnp_test;
-			snp_name_test.push_back(rs);
-		}else{
-			cout << "Error: Invalid format in " << path_bim_test << endl;
-			file_bim.close();
-			exit(1);
-		}
-	}
-	file_bim.close();
-	
-	vector<bool> snp_used(snp_name_test.size(), false);
-	vector<int> snp_col(snp_name_test.size(), -1);
-	for(int i = 0; i < snp_used_in_forest.size(); ++i){
-		string str = snp_used_in_forest[i];
-		bool b = false;
-		for(int j = 0; j < snp_name_test.size(); ++j){
-			if(str == snp_name_test[j]){
-				b = true;
-				snp_used[j] = true;
-				snp_col[j] = snp_id_used_in_forest[i];
-				break;
-			}
-		}
-		if(!b){
-			cout << "Error: Cannot find SNP " << str << " in " << path_bim_test << endl;
-			exit(1);
-		}
-	}
-	
-	//load genotypes by memory mapping
-	stringstream file_bed;
-	file_bed << path_bed_test;
-	int fb = open(file_bed.str().c_str(), O_RDONLY);
-	if(fb < 0){
-		cout << "Error: Cannot open BED file " << path_bed_test << endl;
-		close(fb);
-		exit(1);
-	}
-	
-	LEN_bed = 8;
-	int nblock_bed = (int) ceil((2 * (double) nsub_fam) / LEN_bed);
-	
-	uint8 *map;
-	int file_size = (3 + nblock_bed * nsnp_test) * sizeof(uint8);
-	map = (uint8*) mmap(0, file_size, PROT_READ, MAP_PRIVATE, fb, 0);
-	if(map == MAP_FAILED){
-		cout << "Error: Failed in memory mapping on the BED file " << path_bed_test << endl;
-		close(fb);
-		exit(1);
-	}
-	
-	if(map[0] != 0x6c || map[1] != 0x1b){
-		cout << "Error: " << path_bed_test << " is not a plink BED file" << endl;
-		munmap(map, file_size);
-		close(fb);
-		exit(1);
-	}
-	
-	if(map[2] == 0x01){
-		;
-	}else if(map[2] == 0x00){
-		cout << "Error: bamboo only accepts BED file with SNP-major mode" << endl;
-		munmap(map, file_size);
-		close(fb);
-		exit(1);
-	}else{
-		cout << "Error: Illegal BED flag" << endl;
-		munmap(map, file_size);
-		close(fb);
-		exit(1);
-	}
-	
-	PROBE1[0] = 0x01;
-	PROBE2[0] = 0x02;
-	PROBE1[1] = 0x04;
-	PROBE2[1] = 0x08;
-	PROBE1[2] = 0x10;
-	PROBE2[2] = 0x20;
-	PROBE1[3] = 0x40;
-	PROBE2[3] = 0x80;
-	
-	MASK = 0x8000000000000000;
-	LEN = 64;
-	
-	nblock_test = (int) ceil (((double) nsub_test) / LEN);
-	
-	bitloc_test.reserve(nsub_test);
-	MASK_offset_test.reserve(nsub_test);
-	for(int k = 0; k < nsub_test; ++k){
-		bitloc_test.push_back(k / LEN);
-		MASK_offset_test.push_back(MASK >> (k % LEN));
-	}
-	
-	geno64_test = bitmat(nsnp * 3);
-	
-	for(int i = 0; i < nsnp_test; ++i){
-		if(!snp_used[i]){
-			continue;
-		}else{ 
-			geno64_test[snp_col[i] * 3] = bitvec(nblock_test, (uint64) 0);
-			geno64_test[snp_col[i] * 3 + 1] = bitvec(nblock_test, (uint64) 0);
-			geno64_test[snp_col[i] * 3 + 2] = bitvec(nblock_test, (uint64) 0);
-		}
-		
-		int k = -1;
-		int t = 0;
-		for(int j = 0; j < nblock_bed; ++j){
-			uint8 b = map[3 + i * nblock_bed + j];
-			for(int l = 0; l < 4; ++l){
-				++k;
-				if(k < nsub_fam){
-					if(k == index_individual_id_fam_inc[t]){
-						uint8 h1 = b & PROBE1[l];
-						uint8 h2 = b & PROBE2[l];
-						
-						if(h1 && !h2){
-							cout << "Error: bamboo does not allow missing genotypes" << endl;
-							munmap(map, file_size);
-							close(fb);
-							exit(1);
-						}else if(!h1 && !h2){
-							geno64_test[snp_col[i] * 3][bitloc_test[t]] |= MASK_offset_test[t];
-						}else if(!h1 && h2){
-							geno64_test[snp_col[i] * 3 + 1][bitloc_test[t]] |= MASK_offset_test[t];
-						}else{
-							geno64_test[snp_col[i] * 3 + 2][bitloc_test[t]] |= MASK_offset_test[t];
-						}
-						
-						++t;
-						if(t >= nsub_test){
-							break;
-						}
-					}else{
-						continue;
-					}
-				}else{
-					break;
-				}
-			}
-		}
-	}
-	
-	munmap(map, file_size);
-	close(fb);
-	
-	cout << nsnp << " markers of " << nsub_test << " individuals are loaded from [ " << path_bed_test << " ] for prediction" << endl;
-	
-	//load continuous covariates
-	if(cont_var_used_in_forest.size() > 0){
-		ifstream f_cont(path_cont_test);
-		if(!f_cont){
-			cout << "Error: Cannot open CON file " << path_cont_test << endl;
-			exit(1);
-		}
-		
-		vector<bool> index_inc(nsub_cont, false);
-		for(int i = 0; i < index_individual_id_cont_inc.size(); ++i){
-			index_inc[index_individual_id_cont_inc[i]] = true;
-		}
-		
-		xcont_test = vector<vector<double> > (ncont, vector<double> (nsub_test, .0));
-		
-		int nrow = -2;
-		int k = -1;
-		for(string s; getline(f_cont, s); ){
-			istringstream sin(s);
-			string iid;
-			++nrow;
-			if(nrow == -1){//skip header
-				continue;
-			}else if(nrow >= 0){
-				if(index_inc[nrow]){//use this row
-					++k;
-					sin >> iid;
-					double d;
-					int j = -1;
-					while(sin >> d){
-						++j;
-						if(cont_col[j] == -1){
-							continue;
-						}else if(cont_col[j] >= 0 && cont_col[j] < ncont){
-							xcont_test[cont_col[j]][k] = d;
-						}else{
-							cout << "Error: in loading " << path_cont_test << endl;
-							f_cont.close();
-							exit(1);
-						}
-					}
-				}else{
-					continue;
-				}
-			}else{//impossible
-				cout << "Error: what?" << endl;
-			}
-		}
-		f_cont.close();
-		
-		cout << ncont << " continuous covariate(s) are loaded from [ " << path_cont_test << " ] for prediction" << endl;
-	}
-	
-	//load categorical covariates
-	if(cate_var_used_in_forest.size() > 0){
-		ifstream f_cate(path_cate_test);
-		if(!f_cate){
-			cout << "Error: Cannot open CAT file " << path_cate_test << endl;
-			exit(1);
-		}
-		
-		vector<bool> index_inc(nsub_cate, false);
-		for(int i = 0; i < index_individual_id_cate_inc.size(); ++i){
-			index_inc[index_individual_id_cate_inc[i]] = true;
-		}
-		
-		xcate_test = vector<vector<string> > (ncate, vector<string> (nsub_test));
-		
-		int nrow = -2;
-		int k = -1;
-		for(string s; getline(f_cate, s); ){
-			istringstream sin(s);
-			string iid;
-			++nrow;
-			if(nrow == -1){//skip header
-				continue;
-			}else if(nrow >= 0){
-				if(index_inc[nrow]){//use this row
-					++k;
-					sin >> iid;
-					string str;
-					int j = -1;
-					while(sin >> str){
-						++j;
-						if(cate_col[j] == -1){
-							continue;
-						}else if(cate_col[j] >= 0 && cate_col[j] < ncate){
-							xcate_test[cate_col[j]][k] = str;
-						}else{
-							cout << "Error: in loading " << path_cate_test << endl;
-							f_cate.close();
-							exit(1);
-						}
-					}
-				}else{
-					continue;
-				}
-			}else{//impossible
-				cout << "Error: what?" << endl;
-			}
-		}
-		f_cate.close();
-		
-		cout << ncate << " categorical covariate(s) are loaded from [ " << path_cate_test << " ] for prediction" << endl;
-	}
-	
-}
-
-
-void BAMBOO::PutDownSampleToTree(const int sample_id, const int tree_id, int &fall_into_node_id, vector<char> &track_path){
-	
-	if(sample_id < 0 || sample_id >= nsub_test){
-		cout << "Error: Invalid sample ID" << endl;
-		exit(1);
-	}
-	
-	if(!track_path.empty()){
-		track_path.clear();
-	}
-	
-	const NODE *node = &(bamboo[tree_id][0]);
-	bool direction = true;//true if to the left, false if to the right
-	while(!(*node).terminal){
-		if((*node).split_by == CODE_SNP){
-			int snp_id = (*node).split_snp_id;
-			int snp_left_val = (*node).split_snp_left_val;
-			if(snp_left_val == 0){//snp == 0 are going to the left
-				direction = 
-				(geno64_test[snp_id * 3][bitloc_test[sample_id]] & MASK_offset_test[sample_id]) ? true : false;//true if snp == 0
-			}else if(snp_left_val == 1){//snp == 0 or are going to the left
-				direction = (geno64_test[snp_id * 3 + 2][bitloc_test[sample_id]] & MASK_offset_test[sample_id]) ? false : true;//false if snp == 2
-			}else{//impossible
-				cout << "Error: Invalide snp_left_val when predicting samples" << endl;
-				exit(1);
-			}
-		}else if((*node).split_by == CODE_CONT){
-			int cont_id = (*node).split_cont_id;
-			direction = (xcont_test[cont_id][sample_id] <= (*node).split_cont_thr) ? true : false;//true if <= threshold
-		}else if((*node).split_by == CODE_CATE){
-			int cate_id = (*node).split_cate_id;
-			if((*node).split_cate_left_code.size() < (*node).split_cate_right_code.size()){
-				direction = false;
-				for(int ii = 0; ii < (*node).split_cate_left_code.size(); ++ii){
-					if(xcate_test[cate_id][sample_id] == (*node).split_cate_left_string[ii]){
-						direction = true;
-						break;
-					}
-				}
-			}else{
-				direction = true;
-				for(int ii = 0; ii < (*node).split_cate_right_code.size(); ++ii){
-					if(xcate_test[cate_id][sample_id] == (*node).split_cate_right_string[ii]){
-						direction = false;
-						break;
-					}
-				}
-			}
-		}else{//impossible
-			cout << "Error: Invalid splitting code in node.split_by" << endl;
-			exit(1);
-		}
-		
-		if(direction){
-			node = &(bamboo[tree_id][(*node).ichild1]);
-			track_path.push_back('L');
-		}else{
-			node = &(bamboo[tree_id][(*node).ichild2]);
-			track_path.push_back('R');
-		}
-	}
-	
-	fall_into_node_id = (*node).node_id;
-	
-}
-
-
-void BAMBOO::SavePrediction(){
-	
-	ntree = bamboo.size();
-	
-	ofstream file_pred;
-	file_pred.open(path_pred);
-	file_pred << "IND_ID\tPOST_PROB_CASE1\tPRED_CLASS1\tPOST_PROB_CASE2\tPRED_CLASS2" << endl;
-	for(int i = 0; i < nsub_test; ++i){
-		double pp1 = .0;
-		double pp2 = .0;
-		double tmp0 = .0;
-		double tmp1 = .0;
-		for(int j = 0; j < ntree; ++j){
-			pp1 += pred_risk_ctrl_test[j][i]/(pred_risk_ctrl_test[j][i] + pred_risk_case_test[j][i]);
-			tmp0 += pred_risk_ctrl_test[j][i];
-			tmp1 += pred_risk_case_test[j][i];
-		}
-		pp1 /= ntree;
-		pp2 = tmp0 / (tmp0 + tmp1);
-		
-		file_pred << individual_id_test[i] << "\t" << pp1 << "\t";
-		if(pp1 > .5){
-			file_pred << "CASE";
-		}else{
-			file_pred << "CONTROL";
-		}
-		
-		file_pred << "\t" << pp2 << "\t";
-		
-		if(pp2 > .5){
-			file_pred << "CASE";
-		}else{
-			file_pred << "CONTROL";
-		}
-		file_pred << endl;
-	}
-	file_pred.close();
-	
-	cout << "The predictions of testing data have been saved in [ " << path_pred << " ]" << endl;
-	
-}
-
-
-void BAMBOO::PredictFromBamboo(){
-	
-	if(!pred_from_specified_model && !pred_from_trained_model){
-		return;
-	}
-	
-	LoadBamboo();
-	LoadTestingData();
-	
-	ntree = bamboo.size();
-	pred_leaf_id_test = vector<vector<int> > (ntree, vector<int>(nsub_test, -1));
-	pred_risk_ctrl_test = vector<vector<double> > (ntree, vector<double>(nsub_test, -1.0));
-	pred_risk_case_test = vector<vector<double> > (ntree, vector<double>(nsub_test, -1.0));
-	
-	for(int i = 0; i < nsub_test; ++i){
-		int sample_id = i;
-		for(int j = 0; j < ntree; ++j){
-			int tree_id = j;
-			vector<char> track_path;//left (L) and right (R) along the path to the leaf
-			if(!track_path.empty()){
-				track_path.clear();
-			}
-			int fall_into_node_id = -1;
-			PutDownSampleToTree(sample_id, tree_id, fall_into_node_id, track_path);
-			if(fall_into_node_id >= 0 && fall_into_node_id < bamboo[tree_id].size()){
-				pred_leaf_id_test[tree_id][sample_id] = bamboo[tree_id][fall_into_node_id].leaf_id;
-				pred_risk_ctrl_test[tree_id][sample_id] = bamboo[tree_id][fall_into_node_id].node_risk_ctrl;
-				pred_risk_case_test[tree_id][sample_id] = bamboo[tree_id][fall_into_node_id].node_risk_case;
-			}else{
-				cout << "Error: Cannot assign sample " << i+1 << " in testing data to any leaf of the tree " << j + 1 << endl;
-				exit(1);
-			}
-		}
-	}
-	
-	SavePrediction();
-	
-}
 
 
 

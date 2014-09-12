@@ -83,8 +83,6 @@ class NODE{
 	int split_cate_id;
 	vector<int> split_cate_left_code;
 	vector<int> split_cate_right_code;
-	vector<string> split_cate_left_string;
-	vector<string> split_cate_right_string;
 	
 	int ncase_all;
 	int nctrl_all;
@@ -153,8 +151,6 @@ class NODE{
 		split_cate_id = -1;
 		split_cate_left_code.clear();
 		split_cate_right_code.clear();
-		split_cate_left_string.clear();
-		split_cate_right_string.clear();
 		
 		class_weight = input_class_weight;
 		ncase = input_ncase;
@@ -202,26 +198,59 @@ class NODE{
 		
 	}
 	
-	NODE(const NODE& node){
+};
+
+class MINI_NODE{
+	
+	public:
+	int node_id;
+	int leaf_id;
+	int tree_id;
+	
+	int split_snp_id;
+	int split_snp_left_val;
+	
+	int split_cont_id;
+	double split_cont_thr;
+	
+	int split_cate_id;
+	vector<int> split_cate_left_code;
+	vector<int> split_cate_right_code;
+	
+	int split_by;
+	double split_stat;
+	bool terminal;
+	
+	int node_class;
+	double node_risk_case;
+	double node_risk_ctrl;
+	
+	double node_prob[2];
+	
+	int N;
+	
+	int iparent;
+	int ichild1;
+	int ichild2;
+	
+	MINI_NODE(const NODE& node){
 		
 		node_id = node.node_id;
 		leaf_id = node.leaf_id;
 		tree_id = node.tree_id;
 		
-		//split_snp = node.split_snp;
 		split_snp_id = node.split_snp_id;
 		split_snp_left_val = node.split_snp_left_val;
 		
-		//split_cont = node.split_cont;
 		split_cont_id = node.split_cont_id;
 		split_cont_thr = node.split_cont_thr;
 		
-		//split_cate = node.split_cate;
 		split_cate_id = node.split_cate_id;
-		split_cate_left_string = node.split_cate_left_string;
-		split_cate_right_string = node.split_cate_right_string;
+		split_cate_left_code = node.split_cate_left_code;
+		split_cate_right_code = node.split_cate_right_code;
 		
 		split_by = node.split_by;
+		split_stat = node.split_stat;
 		terminal = node.terminal;
 		node_class = node.node_class;
 		node_risk_case = node.node_risk_case;
@@ -229,65 +258,85 @@ class NODE{
 		node_prob[0] = node.node_prob[0];
 		node_prob[1] = node.node_prob[1];
 		
-		ncase = node.ncase;
-		nctrl = node.nctrl;
 		N = node.N;
-		class_weight = node.class_weight;
 		
 		iparent = node.iparent;
 		ichild1 = node.ichild1;
 		ichild2 = node.ichild2;
 		
-		parent = NULL;
-		child1 = NULL;
-		child2 = NULL;
+	}
+	
+	MINI_NODE(const MINI_NODE& mini_node){
 		
+		node_id = mini_node.node_id;
+		leaf_id = mini_node.leaf_id;
+		tree_id = mini_node.tree_id;
+		
+		split_snp_id = mini_node.split_snp_id;
+		split_snp_left_val = mini_node.split_snp_left_val;
+		
+		split_cont_id = mini_node.split_cont_id;
+		split_cont_thr = mini_node.split_cont_thr;
+		
+		split_cate_id = mini_node.split_cate_id;
+		split_cate_left_code = mini_node.split_cate_left_code;
+		split_cate_right_code = mini_node.split_cate_right_code;
+		
+		split_by = mini_node.split_by;
+		split_stat = mini_node.split_stat;
+		terminal = mini_node.terminal;
+		node_class = mini_node.node_class;
+		node_risk_case = mini_node.node_risk_case;
+		node_risk_ctrl = mini_node.node_risk_ctrl;
+		node_prob[0] = mini_node.node_prob[0];
+		node_prob[1] = mini_node.node_prob[1];
+		
+		N = mini_node.N;
+		
+		iparent = mini_node.iparent;
+		ichild1 = mini_node.ichild1;
+		ichild2 = mini_node.ichild2;
 		
 	}
 	
-	NODE& operator=(const NODE &node){
+	
+	MINI_NODE& operator=(const MINI_NODE &mini_node){
 		
-		node_id = node.node_id;
-		leaf_id = node.leaf_id;
-		tree_id = node.tree_id;
+		node_id = mini_node.node_id;
+		leaf_id = mini_node.leaf_id;
+		tree_id = mini_node.tree_id;
 		
 		//split_snp = node.split_snp;
-		split_snp_id = node.split_snp_id;
-		split_snp_left_val = node.split_snp_left_val;
+		split_snp_id = mini_node.split_snp_id;
+		split_snp_left_val = mini_node.split_snp_left_val;
 		
 		//split_cont = node.split_cont;
-		split_cont_id = node.split_cont_id;
-		split_cont_thr = node.split_cont_thr;
+		split_cont_id = mini_node.split_cont_id;
+		split_cont_thr = mini_node.split_cont_thr;
 		
 		//split_cate = node.split_cate;
-		split_cate_id = node.split_cate_id;
-		split_cate_left_string = node.split_cate_left_string;
-		split_cate_right_string = node.split_cate_right_string;
+		split_cate_id = mini_node.split_cate_id;
+		split_cate_left_code = mini_node.split_cate_left_code;
+		split_cate_right_code = mini_node.split_cate_right_code;
 		
-		split_by = node.split_by;
-		terminal = node.terminal;
-		node_class = node.node_class;
-		node_risk_case = node.node_risk_case;
-		node_risk_ctrl = node.node_risk_ctrl;
-		node_prob[0] = node.node_prob[0];
-		node_prob[1] = node.node_prob[1];
+		split_by = mini_node.split_by;
+		split_stat = mini_node.split_stat;
+		terminal = mini_node.terminal;
+		node_class = mini_node.node_class;
+		node_risk_case = mini_node.node_risk_case;
+		node_risk_ctrl = mini_node.node_risk_ctrl;
+		node_prob[0] = mini_node.node_prob[0];
+		node_prob[1] = mini_node.node_prob[1];
 		
-		ncase = node.ncase;
-		nctrl = node.nctrl;
-		N = node.N;
-		class_weight = node.class_weight;
+		N = mini_node.N;
 		
-		iparent = node.iparent;
-		ichild1 = node.ichild1;
-		ichild2 = node.ichild2;
-		
-		parent = NULL;
-		child1 = NULL;
-		child2 = NULL;
+		iparent = mini_node.iparent;
+		ichild1 = mini_node.ichild1;
+		ichild2 = mini_node.ichild2;
 		
 	}
 	
-	bool operator==(const NODE &node) const;
+	bool operator==(const MINI_NODE &mini_node) const;
 	
 	friend class BAMBOO;
 	
@@ -296,25 +345,22 @@ class NODE{
 	template<class Archive>
 	void serialize(Archive & ar, const unsigned int & version){
 		
-
 		ar & node_id;
 		ar & leaf_id;
 		ar & tree_id;
 		
-		//ar & split_snp;
 		ar & split_snp_id;
 		ar & split_snp_left_val;
 		
-		//ar & split_cont;
 		ar & split_cont_id;
 		ar & split_cont_thr;
 		
-		//ar & split_cate;
 		ar & split_cate_id;
-		ar & split_cate_left_string;
-		ar & split_cate_right_string;
+		ar & split_cate_left_code;
+		ar & split_cate_right_code;
 		
 		ar & split_by;
+		ar & split_stat;
 		ar & terminal;
 		ar & node_class;
 		ar & node_risk_case;
@@ -322,22 +368,13 @@ class NODE{
 		ar & node_prob[0];
 		ar & node_prob[1];
 		
-		ar & ncase;
-		ar & nctrl;
-		ar & N;
-		ar & class_weight;
-		
 		ar & iparent;
 		ar & ichild1;
 		ar & ichild2;
 		
-		ar & parent;
-		ar & child1;
-		ar & child2;
-		
 	}
-
-};
+		
+}
 
 struct CATE_CELL{
 	
@@ -469,7 +506,7 @@ class BAMBOO{
 		unsigned char wordbits[65536];
 		
 		string version;
-		vector<vector<NODE> > bamboo; //store the trained model
+		vector<vector<MINI_NODE> > bamboo; //store the trained model
 		vector<string> snp_used_in_forest; //store the names of SNPs involved in the trained model
 		vector<string> cont_var_used_in_forest; //store the names of continuous variables involved in the trained model
 		vector<string> cate_var_used_in_forest; //store the names of categorical variables involved in the trained model
@@ -518,6 +555,9 @@ class BAMBOO{
 		vector<vector<double> > xcont_test;
 		vector<vector<string> > xcate_test;
 		
+		bitmat oob_id64;//out-of-bag id, ntree x nblock
+		bitmat ib_id64;//in-bag id, ntree x nblock
+		
 		int LEN_bed;
 		uint8 PROBE1[4];
 		uint8 PROBE2[4];
@@ -531,23 +571,34 @@ class BAMBOO{
 		vector<int> bitloc_test;
 		bitvec MASK_offset_test;
 		
+		vector<int> bitloc_var;
+		bitvec MASK_offset_var;
+		
+		vector<int> bitloc_tree;
+		bitvec MASK_offset_tree;
+		
 		uint64 MASK;
 		int LEN;
 		int nblock;
 		int nblock_test;
+		int nblock_var;
+		int nblock_tree;
 		
 		vector<bool> check_out;//indicate whether a tree has been created. used when estimate the progress
 		//vector<vector<vector<double> > > model;
-		vector<vector<int> > var_id_used_in_tree;//var ID used by at least one tree in the forest
+		bitmat var_id_used_in_tree_long;//indicate whether a var is used in a bamboo of forest, nvar x nblock_tree, each row is a snp/cont/cate
+		bitmat var_id_used_in_tree_wide;//as above, but with size ntree x nblock_var, each row is a bamboo
 		
-		vector<vector<int> > pred_leaf_id; //the leaf id that a sample will fall in, predicted by a tree, ntree X nsub
+		
+		vector<vector<uint16> > pred_node_id; //the node id of the leaf that a sample will fall in, predicted by a tree, ntree X nsub
 		vector<vector<double> > pred_risk_case;
 		vector<vector<double> > pred_risk_ctrl;
 		vector<vector<int> > pred_sample_class;//the class of a sample predicted by the tree
 		vector<vector<int> > pred_oob_class;//the class of a oob sample predicted by the tree
 		vector<double> oob_error;
 		vector<vector<uint16> > prox;//nsub x nsub matrix for pair proximity
-		vector<vector<float> > gini_dec;//decrease of gini index, ntree X nvar
+		
+		
 		vector<IMPORTANCE> importance;
 		vector<int> num_vote_correct_class;
 		vector<vector<int> > num_vote_loss_permuted_correct_class;
