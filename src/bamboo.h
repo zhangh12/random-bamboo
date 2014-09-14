@@ -233,6 +233,8 @@ class MINI_NODE{
 	int ichild1;
 	int ichild2;
 	
+	MINI_NODE(){};
+	
 	MINI_NODE(const NODE& node){
 		
 		node_id = node.node_id;
@@ -334,6 +336,8 @@ class MINI_NODE{
 		ichild1 = mini_node.ichild1;
 		ichild2 = mini_node.ichild2;
 		
+		return *this;
+		
 	}
 	
 	bool operator==(const MINI_NODE &mini_node) const;
@@ -374,7 +378,7 @@ class MINI_NODE{
 		
 	}
 		
-}
+};
 
 struct CATE_CELL{
 	
@@ -414,7 +418,7 @@ struct IMPORTANCE{
 		return (sort_by > im.sort_by);
 	}
 
-	IMPORTANCE(const float &ig, const float &ir, const float &ibc, const float &ilw, const int &s){
+	IMPORTANCE(const float &ig, const float &ir, const float &ibc, const float &ilw, const int &sb){
 		imp_gini = ig;
 		imp_raw = ir;
 		imp_breiman_cutler = ibc;
@@ -423,9 +427,31 @@ struct IMPORTANCE{
 		imp_sd_breiman_cutler = .0f;
 		imp_sd_liaw_wiener = .0f;
 		sort_by = .0f;
-		var_id = s;
+		var_id = sb;
 	}
 
+};
+
+struct FITTED_PROB{
+
+	int sample_id;
+	int true_class;
+	double post_prob1;
+	double post_prob2;
+	double sort_by;
+	
+	bool operator < (const FITTED_PROB& auc) const{
+		return (sort_by > auc.sort_by);
+	}
+	
+	FITTED_PROB(const int &sid, const int &tc, const double &pp1, const double &pp2, const double &sb){
+		sample_id = sid;
+		true_class = tc;
+		post_prob1 = pp1;
+		post_prob2 = pp2;
+		sort_by = sb;
+	}
+	
 };
 
 
@@ -464,13 +490,13 @@ class BAMBOO{
 		char *path_fam;
 		char *path_cont;
 		char *path_cate;
-		char *path_test;
 		char *path_prox;
 		char *path_imp;
 		char *path_bam;
 		char *path_err;
 		char *path_cof;
 		char *path_pred;
+		char *path_auc;
 		
 		char *path_fam_test;
 		char *path_bed_test;
@@ -554,9 +580,12 @@ class BAMBOO{
 		bitmat geno64_test;
 		vector<vector<double> > xcont_test;
 		vector<vector<string> > xcate_test;
+		vector<vector<int> > xcate_int_test;
 		
 		bitmat oob_id64;//out-of-bag id, ntree x nblock
 		bitmat ib_id64;//in-bag id, ntree x nblock
+		
+		vector<int> num_oob;//number of oob in each of trees. len = ntree
 		
 		int LEN_bed;
 		uint8 PROBE1[4];
@@ -585,78 +614,81 @@ class BAMBOO{
 		int nblock_tree;
 		
 		vector<bool> check_out;//indicate whether a tree has been created. used when estimate the progress
+		vector<bool> check_in;
 		//vector<vector<vector<double> > > model;
 		bitmat var_id_used_in_tree_long;//indicate whether a var is used in a bamboo of forest, nvar x nblock_tree, each row is a snp/cont/cate
 		bitmat var_id_used_in_tree_wide;//as above, but with size ntree x nblock_var, each row is a bamboo
+		vector<int> num_var_in_tree;//number of used variables in each of trees. len = ntree
 		
 		
 		vector<vector<uint16> > pred_node_id; //the node id of the leaf that a sample will fall in, predicted by a tree, ntree X nsub
-		vector<vector<double> > pred_risk_case;
-		vector<vector<double> > pred_risk_ctrl;
-		vector<vector<int> > pred_sample_class;//the class of a sample predicted by the tree
-		vector<vector<int> > pred_oob_class;//the class of a oob sample predicted by the tree
 		vector<double> oob_error;
 		vector<vector<uint16> > prox;//nsub x nsub matrix for pair proximity
 		
 		
 		vector<IMPORTANCE> importance;
-		vector<int> num_vote_correct_class;
-		vector<vector<int> > num_vote_loss_permuted_correct_class;
+		vector<int> num_vote_correct_class;//number of correct votes of each of trees. computed from oob only. len = ntree
+		vector<vector<uint16> > num_vote_loss_permuted_correct_class;//each row corresponds to a tree. lengths of rows vary
 		vector<int> oob_prediction;
-		vector<int> oob_size;//sample size of oob samples in each tree
 		vector<vector<int> > confusion_matrix;
 		
-		vector<vector<int> > pred_leaf_id_test; //the leaf id that a testing sample will fall in, predicted by a tree, ntree X nsub_test
-		vector<vector<double> > pred_risk_ctrl_test;
-		vector<vector<double> > pred_risk_case_test;
+		vector<double> post_prob_case1_test;//posterior probability that a sample testing data is a case. Computed by definition 1
+		vector<double> post_prob_case2_test;//posterior probability that a sample testing data is a case. Computed by definition 2
+		
+		vector<double> fitted_risk_ctrl;//risk as a control (oob) in training data, used in computing AUC
+		vector<double> fitted_risk_case;//risk as a case (oob) in training data, used in computed AUC
+		vector<FITTED_PROB> fitted_prob;//as above, but for training data (oob only)
+		double auc;
 		
 		inline int PopCount(uint64 x){ return wordbits[x & 0xFFFF] + wordbits[(x >> 16) & 0xFFFF] + wordbits[(x >> 32) & 0xFFFF] + wordbits[x >> 48]; }
+		
 		void EncodeCont();
 		void EncodeCate();
 		void PrintPara();
 		void LoadTrainingData();
-		void Bootstrap(drand48_data&, bitmat&, bitmat&, bitmat&, vector<vector<int> >&, vector<int>&, vector<int>&, vector<int>&, int&);
+		void CreateFile(char*, const char *const);
+		void Bootstrap(const int, drand48_data&, bitmat&, bitmat&, bitmat&, vector<vector<int> >&, vector<int>&, vector<int>&, vector<int>&, int&);
 		void ShuffleSNP(drand48_data&, vector<int>&);
 		void ShuffleAllFeature(drand48_data&, vector<int>&, vector<int>&, vector<int>&);
 		void Shuffle(drand48_data&, vector<int>&, vector<int>&, vector<int>&);
 		bool SplitNode(NODE&, const bitmat&, const bitmat&, const vector<int>&, const vector<vector<int> >&, drand48_data&);
-		void PutDownSampleToTree(const int, const NODE&, int&, vector<char> &);
-		void PutDownSampleToTree(const int, const int, int&, vector<char>&);
-		void AssignSample(const NODE&, const vector<NODE*>&);
-		void AssignOOB(const vector<int>&, const int);
-		void FisherYatesShuffle(drand48_data&, vector<int>&);
-		void PutDownPermutedOOB2Tree(const int, const int, const int, const NODE&, int&);
-		void AssignPermutedOOB(drand48_data&, const NODE&, const vector<NODE*>&, const vector<int>&);
 		void DestroyTree(vector<NODE*>&);
 		void GrowTree(drand48_data&, const int);
-		void CompOOBErrorSingleProc(const int);
-		void CompOOBErrorMultiProc();
-		void CompConfusionMatrix();
-		void CompProximity();
-		void CompGiniImportance();
-		void CompPermutationImportance();
-		void WriteImportance();
-		void CompImportance();
-		void PrintProgress();
-		void GrowForestSingleProc();
-		void GrowForestMultiProc();
-		void WriteOOBError();
+		void PrintProgress(const time_t);
+		void GrowForestMultiProc(const time_t);
 		void SaveBamboo();
-		void SavePrediction();
-		
+		void PutDownTrainingSampleToTree(const int, const int, int&);
+		void PredictTrainingSample();
+		void ComputeProximity();
+		void WriteOOBError();
+		void ComputeOOBError();
+		void WriteOOBAUC();
+		void ComputeOOBAUC();
+		void WriteConfusionMatrix();
+		void ComputeConfusionMatrix();
+		void ComputeGiniImportance();
+		void FisherYatesShuffle(drand48_data&, vector<int>&);
+		void PutDownOOBSampleToTree(const int, const int, const int, const int, int&);
+		void ComputePermutationImportance();
+		void WriteImportance();
+		void ComputeImportance();
 		void LoadBamboo();
 		void LoadTestingData();
+		void PutDownTestingSampleToTree(const int, const int, int&);
+		void SavePrediction();
 		
 	public:
 		
+		BAMBOO(){};
 		BAMBOO(const char *const, const char *const, const char * const, const char * const, 
 		const char *const, const int, 
 		const int, const int, const int, const int, const int, const int, const double, const double, 
 		const bool, const bool, const bool, const bool, const bool, const bool);
-		BAMBOO(const char *const, const char *const, const char *const);
+		BAMBOO(const char *const, const char *const, const char *const, const int);
 		~BAMBOO();
+		
 		void GrowForest();
-		void PredictFromBamboo();
+		void PredictTestingSample();
 		
 		friend bitvec operator&(const bitvec&, const bitvec&);
 		friend ostream& operator<<(ostream&, const vector<double>&);

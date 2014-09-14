@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.3.0    |   September 11, 2014    //
+//    RANDOM BAMBOO    |     v0.3.0    |   September 13, 2014    //
 //---------------------------------------------------------------//
 //      (C) 2014 Han Zhang, GNU General Public License  V3       //
 //---------------------------------------------------------------//
@@ -9,9 +9,11 @@
 //                                                               //
 //   Update: 0.3.x                                               //
 //                                                               //
-//     September 11, 2014                                        //
-//     (1) Re-wirte the whole program to allow large ntree nsub  //
-//         and nvar                                              //
+//     September 12, 2014                                        //
+//     (1) Re-wirte the whole program to allow large ntree, nsub //
+//         and nvar, e.g., reduce memory consumption             //
+//     (2) Parallelize the program in stages of loading and      //
+//         predicting data                                       //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 
@@ -20,11 +22,12 @@
 #include "constant.h"
 #include "bamboo.h"
 
+
 int main(int argc, char **argv){
 	
 	cout << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
-	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      09/11/2014     |" << endl;
+	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      09/13/2014     |" << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
 	cout << "|        (C) 2014 Han Zhang, GNU General Public License, V3        |" << endl;
 	cout << "+------------------------------------------------------------------+" << endl;
@@ -42,11 +45,11 @@ int main(int argc, char **argv){
 	
 	int ntree = 1;//t
 	int mtry = 0;//m
-	int seed = 0;//s
+	int seed = 1;//s
 	int max_nleaf = 1000000;//l
 	int min_leaf_size = 1;//r
 	int imp_measure = 1;//i
-	int nthread = 1;//h
+	int nthread = sysconf( _SC_NPROCESSORS_ONLN );//h
 	//if class_weight < 0, reweight to balance the data
 	double class_weight = -1.0;//w
 	double cutoff = 1.0;//u
@@ -251,17 +254,17 @@ int main(int argc, char **argv){
 		class_weight = 1.0;
 	}
 	
+	
 	if(!file_spec && pred_spec){
-		//BAMBOO bb(out, pred, model);
-		//bb.GrowForest();
-		//bb.PredictFromBamboo();
+		BAMBOO bb (out, pred, model, nthread);
+		bb.GrowForest();
+		bb.PredictTestingSample();
 	}else{
-		BAMBOO bb(file, out, cont, cate, pred, ntree, mtry, max_nleaf, min_leaf_size, imp_measure, seed, 
+		BAMBOO bb (file, out, cont, cate, pred, ntree, mtry, max_nleaf, min_leaf_size, imp_measure, seed, 
 		nthread, class_weight, cutoff, flip, output_prox, output_imp, output_bamboo, balance, trace);
 		bb.GrowForest();
-		//bb.PredictFromBamboo();
+		bb.PredictTestingSample();
 	}
-	
 	
 	return 0;
 	

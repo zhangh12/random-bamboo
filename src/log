@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.3.0    |   September 11, 2014    //
+//    RANDOM BAMBOO    |     v0.3.0    |   September 12, 2014    //
 //---------------------------------------------------------------//
 //      (C) 2014 Han Zhang, GNU General Public License  V3       //
 //---------------------------------------------------------------//
@@ -139,8 +139,10 @@
 //                                                               //
 //   Update: 0.3.x                                               //
 //                                                               //
-//     September 11, 2014                                        //
-//     (1) Re-wirte the whole program to allow large ntree nsub  //
-//         and nvar                                              //
+//     September 12, 2014                                        //
+//     (1) Re-wirte the whole program to allow large ntree, nsub //
+//         and nvar, e.g., reduce memory consumption             //
+//     (2) Parallelize the program in stages of loading and      //
+//         predicting data                                       //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
