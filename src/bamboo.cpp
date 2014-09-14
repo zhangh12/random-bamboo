@@ -2466,8 +2466,12 @@ void BAMBOO::PrintProgress(const time_t elapsed_time){
 	}
 	cout << "|  REM ~";
 	
-	time_t rem = (time_t) ceil(elapsed_time / prg * (100-prg)); 
-	cout << setprecision(2) << rem/3600.0 << "h\r" << flush;
+	if(prg > 0){
+		time_t rem = (time_t) ceil(elapsed_time * 1.0 / prg * (100-prg)); 
+		cout << setprecision(2) << rem/3600.0 << "h\r" << flush;
+	}else{
+		cout << " NA\r" << flush;
+	}
 	
 	//time_t tot = (time_t) ceil(elapsed_time / prg * 100);
 	//cout << "/" << setprecision(2) << tot/3600.0 << "h\r" << flush;
