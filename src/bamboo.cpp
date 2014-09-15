@@ -149,6 +149,14 @@ BAMBOO::~BAMBOO(){
 		delete[] path_cate;
 	}
 	
+	if(path_trainid){
+		delete[] path_trainid;
+	}
+	
+	if(path_testid){
+		delete[] path_testid;
+	}
+	
 	delete[] path_err;
 	delete[] path_cof;
 	delete[] path_auc;
@@ -349,6 +357,34 @@ void BAMBOO::LoadTrainingData(){
 	
 	cout << "Loading training data ..." << endl;
 	
+	if(!specified_trainid.empty()){
+		specified_trainid.clear();
+	}
+	
+	if(path_trainid){
+		ifstream file_trainid(path_trainid);
+		if(!file_trainid){
+			cout << "Error: Cannot open IID file " << path_trainid << endl;
+			exit(1);
+		}
+		
+		for(string s; getline(file_trainid, s); ){
+			istringstream sin(s);
+			string iid;
+			sin >> iid;
+			specified_trainid.push_back(iid);
+		}
+		file_trainid.close();
+		
+		if(specified_trainid.size() == 0){
+			cout << "Error: 0 individuals are specified in " << path_trainid << endl;
+			exit(1);
+		}else{
+			cout << specified_trainid.size() << " individuals specified in [ " << path_trainid << " ] are used as training data" << endl;
+		}
+	}
+	
+	//loading FAM file
 	ifstream file_fam(path_fam);
 	if(!file_fam){
 		cout << "Error: Cannot open FAM file " << path_fam << endl;
@@ -368,8 +404,25 @@ void BAMBOO::LoadTrainingData(){
 		if(sin >> fam_id >> ind_id >> pat_id >> mat_id >> sex >> phen){//only six columns in .fam
 			++nsub_fam;
 			if(phen == 1 || phen == 2){//non-missing phenotype
-				individual_id_fam.push_back(ind_id);
-				index_individual_id_fam.push_back(nrow);
+				
+				bool in_spec = true;
+				if(path_trainid){
+					in_spec = false;
+					for(int i = 0; i < specified_trainid.size(); ++i){
+						if(ind_id == specified_trainid[i]){
+							in_spec = true;
+							break;
+						}
+					}
+				}else{
+					in_spec = true;
+				}
+				
+				if(in_spec){
+					individual_id_fam.push_back(ind_id);
+					index_individual_id_fam.push_back(nrow);
+				}
+				
 			}
 		}else{
 			cout << "Error: Invalid format in " << path_fam << endl;
@@ -975,7 +1028,7 @@ void BAMBOO::LoadTrainingData(){
 
 
 BAMBOO::BAMBOO(const char *const input_path_out, const char *const input_path_test, 
-	const char *const input_path_bam, const int input_nthread){
+	const char *const input_path_bam, const char *const input_path_testid, const int input_nthread){
 	
 	time_t start_time;
 	time(&start_time);
@@ -1018,6 +1071,15 @@ BAMBOO::BAMBOO(const char *const input_path_out, const char *const input_path_te
 	strcat(path_cate_test, input_path_test);
 	strcat(path_cate_test, ".cat");
 	
+	if(input_path_testid){
+		path_testid = new char[strlen(input_path_testid)+5];
+		path_testid[0] = '\0';
+		strcat(path_testid, input_path_testid);
+		strcat(path_testid, ".iid");
+	}else{
+		path_testid = NULL;
+	}
+	
 	pred_from_trained_model = false;
 	pred_from_specified_model = true;
 	
@@ -1027,7 +1089,8 @@ BAMBOO::BAMBOO(const char *const input_path_out, const char *const input_path_te
 //if --pred is also set, then the test dataset is predicted using the model trained from --file
 BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_out, 
 	const char * const input_path_cont, const char * const input_path_cate, 
-	const char *const input_path_test, 
+	const char *const input_path_test, const char *const input_path_trainid, 
+	const char *const input_path_testid, 
 	const int input_ntree, const int input_mtry, const int input_max_nleaf, 
 	const int input_min_leaf_size, const int input_imp_measure, const int input_seed, 
 	const int input_nthread, const double input_class_weight, const double input_cutoff, 
@@ -1100,6 +1163,15 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	}else{
 		path_cate = NULL;
 		ncate = 0;
+	}
+	
+	if(input_path_trainid){
+		path_trainid = new char[strlen(input_path_trainid)+5];
+		path_trainid[0] = '\0';
+		strcat(path_trainid, input_path_trainid);
+		strcat(path_trainid, ".iid");
+	}else{
+		path_trainid = NULL;
 	}
 	
 	for(int i = 0; i < 65536; ++i){
@@ -1235,6 +1307,8 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 			path_cont_test[0] = '\0';
 			strcat(path_cont_test, input_path_test);
 			strcat(path_cont_test, ".con");
+		}else{
+			path_cont_test = NULL;
 		}
 		
 		if(has_cate){
@@ -1242,6 +1316,17 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 			path_cate_test[0] = '\0';
 			strcat(path_cate_test, input_path_test);
 			strcat(path_cate_test, ".cat");
+		}else{
+			path_cate_test = NULL;
+		}
+		
+		if(input_path_testid){
+			path_testid = new char[strlen(input_path_testid)+5];
+			path_testid[0] = '\0';
+			strcat(path_testid, input_path_testid);
+			strcat(path_testid, ".iid");
+		}else{
+			path_testid = NULL;
 		}
 		
 		pred_from_trained_model = true;
@@ -3438,6 +3523,33 @@ void BAMBOO::LoadTestingData(){
 	cout << "Aligning individuals ..." << endl;
 	time_t start = time(NULL);
 	
+	if(!specified_testid.empty()){
+		specified_testid.clear();
+	}
+	
+	if(path_testid){
+		ifstream file_testid(path_testid);
+		if(!file_testid){
+			cout << "Error: Cannot open IID file " << path_testid << endl;
+			exit(1);
+		}
+		
+		for(string s; getline(file_testid, s); ){
+			istringstream sin(s);
+			string iid;
+			sin >> iid;
+			specified_testid.push_back(iid);
+		}
+		file_testid.close();
+		
+		if(specified_testid.size() == 0){
+			cout << "Error: 0 individuals are specified in " << path_testid << endl;
+			exit(1);
+		}else{
+			cout << specified_testid.size() << " individuals specified in [ " << path_testid << " ] are used as testing data" << endl;
+		}
+	}
+	
 	ifstream file_fam(path_fam_test);
 	if(!file_fam){
 		cout << "Error: Cannot open FAM file " << path_fam_test << " for prediction" << endl;
@@ -3453,8 +3565,24 @@ void BAMBOO::LoadTestingData(){
 		int phen;
 		if(sin >> fam_id >> ind_id >> pat_id >> mat_id >> sex >> phen){
 			++nsub_fam;
-			individual_id_fam.push_back(ind_id);
-			index_individual_id_fam.push_back(nsub_fam-1);
+			
+			bool in_spec = true;
+			if(path_testid){
+				in_spec = false;
+				for(int i = 0; i < specified_testid.size(); ++i){
+					if(ind_id == specified_testid[i]){
+						in_spec = true;
+						break;
+					}
+				}
+			}else{
+				in_spec = true;
+			}
+			
+			if(in_spec){
+				individual_id_fam.push_back(ind_id);
+				index_individual_id_fam.push_back(nsub_fam-1);
+			}
 		}else{
 			cout << "Error" << endl;
 			exit(1);

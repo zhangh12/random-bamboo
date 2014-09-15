@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.3.0    |   September 13, 2014    //
+//    RANDOM BAMBOO    |     v0.3.1    |   September 14, 2014    //
 //---------------------------------------------------------------//
 //              (C) 2014 Han Zhang, Yifan Yang                   //
 //              GNU General Public License  V3                   //
@@ -15,6 +15,15 @@
 //         and nvar, e.g., reduce memory consumption             //
 //     (2) Parallelize the program in stages of loading and      //
 //         predicting data                                       //
+//     (3) Save --flip in local model, otherwise the prediction  //
+//         is wrong                                              //
+//                                                               //
+//     September 14, 2014                                        //
+//     (1) Add option --trainid, the individual IDs that         //
+//         included in training stage. This option is useful in  //
+//         cross validation                                      //
+//     (2) Add option --testid, the individual IDs that included //
+//         in testing stage.                                     //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 
@@ -28,7 +37,7 @@ int main(int argc, char **argv){
 	
 	cout << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
-	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      09/13/2014     |" << endl;
+	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      09/14/2014     |" << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
 	cout << "|                   (C) 2014 Han Zhang, Yifan Yang                 |" << endl;
 	cout << "|                   GNU General Public License, V3                 |" << endl;
@@ -43,7 +52,9 @@ int main(int argc, char **argv){
 	char *cont = NULL;//c
 	char *cate = NULL;//a
 	char *pred = NULL;//p
-	char *model = NULL;//b
+	char *bam = NULL;//b
+	char *trainid = NULL;//h
+	char *testid = NULL;//v
 	
 	int ntree = 1;//t
 	int mtry = 0;//m
@@ -66,7 +77,7 @@ int main(int argc, char **argv){
 	bool file_spec = false;
 	bool out_spec = false;
 	bool pred_spec = false;
-	bool model_spec = false;
+	bool bam_spec = false;
 	
 	int c;
 	while(true){
@@ -77,6 +88,8 @@ int main(int argc, char **argv){
 			{"cate", 1, NULL, 'a'},
 			{"pred", 1, NULL, 'p'},
 			{"bam", 1, NULL, 'b'},
+			{"trainid", 1, NULL, 'h'},
+			{"testid", 1, NULL, 'v'},
 			{"ntree", 1, NULL, 't'},
 			{"mtry", 1, NULL, 'm'},
 			{"seed", 1, NULL, 's'},
@@ -95,7 +108,7 @@ int main(int argc, char **argv){
 			{0, 0, 0, 0}
 		};
 		int option_index = 0;
-		c = getopt_long(argc, argv, "f:o:c:a:p:b:t:m:s:l:e:i:d:w:u:gxnBrN", long_options, &option_index);
+		c = getopt_long(argc, argv, "f:o:c:a:p:b:h:v:t:m:s:l:e:i:d:w:u:gxnBrN", long_options, &option_index);
 		
 		if(c == -1){
 			break;
@@ -121,8 +134,14 @@ int main(int argc, char **argv){
 				pred_spec = true;
 				break;
 			case 'b':
-				model = optarg;
-				model_spec = true;
+				bam = optarg;
+				bam_spec = true;
+				break;
+			case 'h':
+				trainid = optarg;
+				break;
+			case 'v':
+				testid = optarg;
 				break;
 			case 't':
 				ntree = atoi(optarg);
@@ -211,14 +230,14 @@ int main(int argc, char **argv){
 	}
 	
 	if(!file_spec){//no plink file is specified
-		if(!pred_spec || !model_spec){
+		if(!pred_spec || !bam_spec){
 			cout << "Error: The option --file must be specified. Program terminates" << endl;
 			return 0;
 		}else{
-			if(pred_spec && !model_spec){
+			if(pred_spec && !bam_spec){
 				cout << "Error: The bamboo must be specified by option --bam for prediction purpose" << endl;
 				return 0;
-			}else if(!pred_spec && model_spec){
+			}else if(!pred_spec && bam_spec){
 				cout << "Error: Please specify test dataset by option --pred" << endl;
 				return 0;
 			}else{
@@ -226,8 +245,8 @@ int main(int argc, char **argv){
 			}
 		}
 	}else{//train model from specified data
-		model = NULL;
-		model_spec = false;
+		bam = NULL;
+		bam_spec = false;
 	}
 	
 	if(!out_spec){//if the name of output file is not specified
@@ -258,12 +277,13 @@ int main(int argc, char **argv){
 	
 	
 	if(!file_spec && pred_spec){
-		BAMBOO bb (out, pred, model, nthread);
+		BAMBOO bb (out, pred, bam, testid, nthread);
 		bb.GrowForest();
 		bb.PredictTestingSample();
 	}else{
-		BAMBOO bb (file, out, cont, cate, pred, ntree, mtry, max_nleaf, min_leaf_size, imp_measure, seed, 
-		nthread, class_weight, cutoff, flip, output_prox, output_imp, output_bamboo, balance, trace);
+		BAMBOO bb (file, out, cont, cate, pred, trainid, testid, ntree, mtry, max_nleaf, min_leaf_size, 
+		imp_measure, seed, nthread, class_weight, cutoff, flip, output_prox, output_imp, output_bamboo, 
+		balance, trace);
 		bb.GrowForest();
 		bb.PredictTestingSample();
 	}
