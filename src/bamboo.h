@@ -95,7 +95,7 @@ class NODE{
 	bool terminal; // indicate that whether the node is set as terminal
 	double split_stat; // the largest reduced gini if splitted
 	int node_class;
-	double node_prob[2];
+	double node_prob[2]; //to save memory, consider to discard this mumber as it can be computed from node_risk_case and node_risk_ctrl
 	double node_risk_case;//Pr(y & c), where y is case/control, c is a leaf
 	double node_risk_ctrl;
 	
@@ -204,7 +204,7 @@ class MINI_NODE{
 	
 	public:
 	int node_id;
-	int leaf_id;
+	//int leaf_id;
 	int tree_id;
 	
 	int split_snp_id;
@@ -221,11 +221,11 @@ class MINI_NODE{
 	double split_stat;
 	bool terminal;
 	
-	int node_class;
+	//int node_class;
 	double node_risk_case;
 	double node_risk_ctrl;
 	
-	double node_prob[2];
+	//double node_prob[2];//discard this member as it can be computed by node_risk_case and node_risk_ctrl
 	
 	int N;
 	
@@ -238,7 +238,7 @@ class MINI_NODE{
 	MINI_NODE(const NODE& node){
 		
 		node_id = node.node_id;
-		leaf_id = node.leaf_id;
+		//leaf_id = node.leaf_id;
 		tree_id = node.tree_id;
 		
 		split_snp_id = node.split_snp_id;
@@ -254,11 +254,11 @@ class MINI_NODE{
 		split_by = node.split_by;
 		split_stat = node.split_stat;
 		terminal = node.terminal;
-		node_class = node.node_class;
+		//node_class = node.node_class;
 		node_risk_case = node.node_risk_case;
 		node_risk_ctrl = node.node_risk_ctrl;
-		node_prob[0] = node.node_prob[0];
-		node_prob[1] = node.node_prob[1];
+		//node_prob[0] = node.node_prob[0];
+		//node_prob[1] = node.node_prob[1];
 		
 		N = node.N;
 		
@@ -271,7 +271,7 @@ class MINI_NODE{
 	MINI_NODE(const MINI_NODE& mini_node){
 		
 		node_id = mini_node.node_id;
-		leaf_id = mini_node.leaf_id;
+		//leaf_id = mini_node.leaf_id;
 		tree_id = mini_node.tree_id;
 		
 		split_snp_id = mini_node.split_snp_id;
@@ -287,11 +287,11 @@ class MINI_NODE{
 		split_by = mini_node.split_by;
 		split_stat = mini_node.split_stat;
 		terminal = mini_node.terminal;
-		node_class = mini_node.node_class;
+		//node_class = mini_node.node_class;
 		node_risk_case = mini_node.node_risk_case;
 		node_risk_ctrl = mini_node.node_risk_ctrl;
-		node_prob[0] = mini_node.node_prob[0];
-		node_prob[1] = mini_node.node_prob[1];
+		//node_prob[0] = mini_node.node_prob[0];
+		//node_prob[1] = mini_node.node_prob[1];
 		
 		N = mini_node.N;
 		
@@ -305,7 +305,7 @@ class MINI_NODE{
 	MINI_NODE& operator=(const MINI_NODE &mini_node){
 		
 		node_id = mini_node.node_id;
-		leaf_id = mini_node.leaf_id;
+		//leaf_id = mini_node.leaf_id;
 		tree_id = mini_node.tree_id;
 		
 		//split_snp = node.split_snp;
@@ -324,11 +324,11 @@ class MINI_NODE{
 		split_by = mini_node.split_by;
 		split_stat = mini_node.split_stat;
 		terminal = mini_node.terminal;
-		node_class = mini_node.node_class;
+		//node_class = mini_node.node_class;
 		node_risk_case = mini_node.node_risk_case;
 		node_risk_ctrl = mini_node.node_risk_ctrl;
-		node_prob[0] = mini_node.node_prob[0];
-		node_prob[1] = mini_node.node_prob[1];
+		//node_prob[0] = mini_node.node_prob[0];
+		//node_prob[1] = mini_node.node_prob[1];
 		
 		N = mini_node.N;
 		
@@ -350,7 +350,7 @@ class MINI_NODE{
 	void serialize(Archive & ar, const unsigned int & version){
 		
 		ar & node_id;
-		ar & leaf_id;
+		//ar & leaf_id;
 		ar & tree_id;
 		
 		ar & split_snp_id;
@@ -366,11 +366,11 @@ class MINI_NODE{
 		ar & split_by;
 		ar & split_stat;
 		ar & terminal;
-		ar & node_class;
+		//ar & node_class;
 		ar & node_risk_case;
 		ar & node_risk_ctrl;
-		ar & node_prob[0];
-		ar & node_prob[1];
+		//ar & node_prob[0];
+		//ar & node_prob[1];
 		
 		ar & iparent;
 		ar & ichild1;
@@ -547,8 +547,10 @@ class BAMBOO{
 		int ncont; //number of continuous covariates
 		int ncate; //number of categorical covariates
 		int nvar; //nsnp + ncont + ncate
+		int nflip; //number of SNPs flipped in training data
 		
 		int nsub_test;//sample size in test dataset
+		int nflip_test;//number of SNPs flipped in testing data
 		
 		vector<string> individual_id;//the individual IDs of all samples involved in the final analysis (without missing phenotype and covariates)
 		vector<string> individual_id_test;//the individual IDs of all samples involved in prediction (without missing covariates)

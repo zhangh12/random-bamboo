@@ -26,9 +26,9 @@ bool MINI_NODE::operator==(const MINI_NODE &mini_node) const {
 		return false;
 	}
 	
-	if(leaf_id != mini_node.leaf_id){
-		return false;
-	}
+//	if(leaf_id != mini_node.leaf_id){
+//		return false;
+//	}
 	
 	if(tree_id != mini_node.tree_id){
 		return false;
@@ -85,9 +85,9 @@ bool MINI_NODE::operator==(const MINI_NODE &mini_node) const {
 		return false;
 	}
 	
-	if(node_class != mini_node.node_class){
-		return false;
-	}
+//	if(node_class != mini_node.node_class){
+//		return false;
+//	}
 	
 	if(abs(node_risk_case - mini_node.node_risk_case) > 1e-12){
 		return false;
@@ -97,13 +97,13 @@ bool MINI_NODE::operator==(const MINI_NODE &mini_node) const {
 		return false;
 	}
 	
-	if(abs(node_prob[0] - mini_node.node_prob[0]) > 1e-12){
-		return false;
-	}
-	
-	if(abs(node_prob[1] - mini_node.node_prob[1]) > 1e-12){
-		return false;
-	}
+//	if(abs(node_prob[0] - mini_node.node_prob[0]) > 1e-12){
+//		return false;
+//	}
+//	
+//	if(abs(node_prob[1] - mini_node.node_prob[1]) > 1e-12){
+//		return false;
+//	}
 	
 	if(N != mini_node.N){
 		return false;
@@ -300,9 +300,6 @@ void BAMBOO::EncodeCate(){
 void BAMBOO::PrintPara(){
 	
 	cout << "Genotypes of " << nsnp << " markers are loaded in SNP-major mode from [ " << path_bed << " ]" << endl;
-	if(flip){
-		cout << "Genotypes are flipped if the minor allele frequencies > 0.5" << endl;
-	}
 	
 	if(has_cont){
 		cout << ncont << " continuous and/or ordinary covariates are loaded from [ " << path_cont << " ]" << endl;
@@ -349,6 +346,8 @@ void BAMBOO::LoadTrainingData(){
 	//if .con and/or .cat files are available, loading their individual ID as well
 	//only the subject without missing covariates/phenotype are included in the analysis
 	//the following code determines the intersection set of individual ID
+	
+	cout << "Loading training data ..." << endl;
 	
 	ifstream file_fam(path_fam);
 	if(!file_fam){
@@ -767,34 +766,52 @@ void BAMBOO::LoadTrainingData(){
 	munmap(map, file_size);
 	close(fb);
 	
+	nflip = 0;
 	if(flip){//test if the genotypes have been correctly loaded
-		for(int j = 0; j < nsnp; ++j){
-			int n0 = 0, n1 = 0, n2 = 0;
-			for(int i = 0; i < nblock; ++i){
-				n0 += PopCount(geno64[j*3][i]);
-				n2 += PopCount(geno64[j*3+2][i]);
-			}
-			if(n0 < n2){// flip the genotype if necessary
-				for(int i = 0; i < nblock; ++i){
-					geno64[j*3][i] = (~(geno64[j*3][i])) & (~(geno64[j*3+1][i]));
-					geno64[j*3+2][i] = (~(geno64[j*3+2][i])) & (~(geno64[j*3+1][i]));
+		
+		vector<bool> flipped(nsnp, false);
+		#pragma omp parallel num_threads(nthread)
+		{
+			#pragma omp for
+			for(int i = 0; i < nsnp; ++i){
+				int n0 = 0, n1 = 0, n2 = 0;
+				for(int k = 0; k < nblock; ++k){
+					n0 += PopCount(geno64[i*3][k]);
+					n2 += PopCount(geno64[i*3+2][k]);
 				}
-				for(int k = nsub; k < LEN * nblock; ++k){
-					geno64[j*3][bitloc_bed[k]] &= ~(MASK_offset_bed[k]);
-					geno64[j*3+2][bitloc_bed[k]] &= ~(MASK_offset_bed[k]);
+				if(n0 < n2){// flip the genotype if necessary
+					flipped[i] = true;
+					for(int k = 0; k < nblock; ++k){
+						geno64[i*3][k] = (~(geno64[i*3][k])) & (~(geno64[i*3+1][k]));
+						geno64[i*3+2][k] = (~(geno64[i*3+2][k])) & (~(geno64[i*3+1][k]));
+					}
+					for(int k = nsub; k < LEN * nblock; ++k){
+						geno64[i*3][bitloc_bed[k]] &= ~(MASK_offset_bed[k]);
+						geno64[i*3+2][bitloc_bed[k]] &= ~(MASK_offset_bed[k]);
+					}
 				}
-			}
-			
-			if(false){
-				n0 = 0, n1 = 0, n2 = 0;
-				for(int i = 0; i < nblock; ++i){
-					n0 += PopCount(geno64[j*3][i]);
-					n1 += PopCount(geno64[j*3+1][i]);
-					n2 += PopCount(geno64[j*3+2][i]);
+				
+				if(false){
+					n0 = 0, n1 = 0, n2 = 0;
+					for(int k = 0; k < nblock; ++k){
+						n0 += PopCount(geno64[i*3][k]);
+						n1 += PopCount(geno64[i*3+1][k]);
+						n2 += PopCount(geno64[i*3+2][k]);
+					}
+					cout << "SNP " << i+1 << " " << n0 << "\t" << n1 << "\t" << n2 << endl;
 				}
-				cout << "SNP " << j+1 << " " << n0 << "\t" << n1 << "\t" << n2 << endl;
 			}
 		}
+		
+		for(int i = 0; i < nsnp; ++i){
+			if(flipped[i]){
+				nflip++;
+			}
+		}
+	}
+	
+	if(nflip > 0){
+		cout << nflip << " markers with MAF > 0.5 are flipped" << endl;
 	}
 	
 	//load y
@@ -963,7 +980,7 @@ BAMBOO::BAMBOO(const char *const input_path_out, const char *const input_path_te
 	time_t start_time;
 	time(&start_time);
 	cout << "Program started: " << ctime(&start_time);
-	cout << "Random Bamboo is loading model ..." << endl;
+	cout << "Random Bamboo is launched for predicting data ..." << endl;
 	
 	nthread = input_nthread;
 	
@@ -1020,7 +1037,7 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	time_t start_time;
 	time(&start_time);
 	cout << "Program started: " << ctime(&start_time);
-	cout << "Random Bamboo is loading data ..." << endl;
+	cout << "Random Bamboo is launched for training predictive model ..." << endl;
 	
 	//loading parameters
 	ntree = input_ntree;
@@ -2468,7 +2485,9 @@ void BAMBOO::PrintProgress(const time_t elapsed_time){
 	
 	if(completed_jobs > 0){
 		time_t rem = (time_t) ceil(elapsed_time * 1.0 / completed_jobs * (ntree - completed_jobs));
+		streamsize ss = cout.precision();
 		cout << setprecision(2) << rem/3600.0 << "h\r" << flush;
+		cout.precision(ss);
 	}else{
 		cout << " NA\r" << flush;
 	}
@@ -2552,13 +2571,14 @@ void BAMBOO::SaveBamboo(){
 			
 		ar & version;
 		ar & nsnp & ncont & ncate;
+		ar & flip;
 		ar & snp_used_in_forest & snp_id_used_in_forest;
 		ar & cont_var_used_in_forest & cont_var_id_used_in_forest;
 		ar & cate_var_used_in_forest & cate_var_id_used_in_forest;
 		ar & cate_unique & cate_code;
 		ar & bamboo;
 	}
-	cout << "Bamboo with " << ntree << " bamboos has been saved in [ " << path_bam << " ]" << endl;
+	cout << "Bamboo with " << ntree << " bamboos is saved in [ " << path_bam << " ]" << endl;
 	cout << snp_used_in_forest.size() << " markers";
 	if(cont_var_id_used_in_forest.size() > 0){
 		cout << ", " << cont_var_used_in_forest.size() << " continuous covariate(s)";
@@ -2760,7 +2780,7 @@ void BAMBOO::ComputeProximity(){
 	}
 	file_prox.close();
 	
-	cout << "The proximites have been calculated and saved in " << path_prox << endl;
+	cout << "The proximites are saved in " << path_prox << endl;
 	
 }
 
@@ -2775,7 +2795,7 @@ void BAMBOO::WriteOOBError(){
 	}
 	file_err.close();
 	
-	cout << "The OOB errors have been saved in [ " << path_err << " ]" << endl;
+	cout << "The OOB errors are saved in [ " << path_err << " ]" << endl;
 	
 }
 
@@ -2804,7 +2824,8 @@ void BAMBOO::ComputeOOBError(){
 				fitted_risk_ctrl[sample_id] += leaf.node_risk_ctrl;
 				fitted_risk_case[sample_id] += leaf.node_risk_case;
 				
-				if(leaf.node_class == y[sample_id]){//a vote cast for the correct class
+				int nc = (leaf.node_risk_case > leaf.node_risk_ctrl) ? 0 : 1;//node class predicted by risk
+				if(nc == y[sample_id]){//a vote cast for the correct class
 					num_vote_correct_class[tree_id] += 1;
 				}
 			}
@@ -2847,7 +2868,7 @@ void BAMBOO::WriteOOBAUC(){
 	}
 	file_auc.close();
 	
-	cout << "The posterior probabilities of OOB samples have been saved in [ " << path_auc << " ]" << endl;
+	cout << "The posterior probabilities of OOB samples are saved in [ " << path_auc << " ]" << endl;
 	cout << "The OOB AUC: " << auc << endl;
 	
 }
@@ -2866,30 +2887,50 @@ void BAMBOO::ComputeOOBAUC(){
 	
 	sort(fitted_prob.begin(), fitted_prob.end());
 	
-	vector<double> fpr (nsub, .0);
-	vector<double> tpr (nsub, .0);
 	
-	vector<int> tp (nsub, 0);
-	vector<int> fp (nsub, 0);
-	for(int i = 0; i < nsub; ++i){
-		if(fitted_prob[i].true_class == 1){
-			tp[i]++;
-			if(i > 0){
-				tp[i] += tp[i-1];
-			}
-			tpr[i] = tp[i] * 1.0 / ncase;
-		}else{
-			fp[i]++;
-			if(i > 0){
-				fp[i] += tp[i-1];
-			}
-			fpr[i] = fp[i] * 1.0 / nctrl;
-		}
+	vector<double> pred_rank(nsub);
+	vector<double> co(nsub+2);
+	vector<double> tp(nsub+2);
+	vector<double> fp(nsub+2);
+	
+	double inc = 1.0/nsub;
+	double tpinc = 1.0/ncase;
+	double fpinc = 1.0/nctrl;
+	
+	pred_rank[0] = 1.0;
+	for(int i = 2; i <= nsub; ++i){
+		pred_rank[i-1] = pred_rank[i-2] - inc;
 	}
 	
+	tp[0] = .0;
+	for(int i = 1; i <= nsub; ++i){
+		if(fitted_prob[i-1].true_class == 1){
+			tp[i] = tp[i-1] + tpinc;
+		}else{
+			tp[i] = tp[i-1];
+		}
+	}
+	tp[nsub+1] = 1.0;
+	
+	fp[0] = .0;
+	for(int i = 1; i <= nsub; ++i){
+		if(fitted_prob[i-1].true_class == 0){
+			fp[i] = fp[i-1] + fpinc;
+		}else{
+			fp[i] = fp[i-1];
+		}
+	}
+	fp[nsub+1] = 1.0;
+	
+	co[0] = 1.0;
+	for(int i = 0; i < nsub; ++i){
+		co[i+1] = pred_rank[i];
+	}
+	co[nsub+1] = .0;
+	
 	auc = .0;
-	for(int i = 1; i < nsub; ++i){
-		auc += .5 * abs(fpr[i] - fpr[i-1]) * (tpr[i] + tpr[i-1]);
+	for(int i = 1; i <= nsub; ++i){
+		auc += .5 * abs(fp[i-1]-fp[i]) * (tp[i] + tp[i-1]);
 	}
 	
 	WriteOOBAUC();
@@ -2908,6 +2949,7 @@ void BAMBOO::WriteConfusionMatrix(){
 	
 	ofstream file_cof;
 	file_cof.open(path_cof);
+	file_cof << "OOB AUC: " << auc << endl;
 	file_cof << "Confusion matrix of oob samples (rows / cols: true / pred classes)" << endl;
 	file_cof << "       \tControl\tCase   \tError  " << endl;
 	file_cof << "Control\t" << confusion_matrix[0][0] << "\t" << confusion_matrix[0][1] << "\t" << confusion_matrix[0][1] * 1.0 / nctrl << "\t(1-Specificity)" << endl;
@@ -3142,7 +3184,8 @@ void BAMBOO::ComputePermutationImportance(){
 						
 						if(fall_into_node_id >= 0 && fall_into_node_id < bamboo[tree_id].size()){
 							MINI_NODE &leaf = bamboo[tree_id][fall_into_node_id];
-							if(leaf.node_class == y[sample_id]){//Hey! It is NOT a bug using "==" rather than "!=" here
+							int nc = (leaf.node_risk_case > leaf.node_risk_ctrl) ? 0 : 1;//node class predicted by risk
+							if(nc == y[sample_id]){//Hey! It is NOT a bug using "==" rather than "!=" here
 								delta -= (uint16) 1;
 							}
 						}else{
@@ -3278,7 +3321,7 @@ void BAMBOO::WriteImportance(){
 	}
 	file_imp.close();
 	
-	cout << "The variable importances have been calculated and saved in [ " << path_imp << " ]" << endl;
+	cout << "The variable importances are saved in [ " << path_imp << " ]" << endl;
 	
 }
 
@@ -3355,6 +3398,7 @@ void BAMBOO::LoadBamboo(){
 				
 			ar & version;
 			ar & nsnp & ncont & ncate;
+			ar & flip;
 			ar & snp_used_in_forest & snp_id_used_in_forest;
 			ar & cont_var_used_in_forest & cont_var_id_used_in_forest;
 			ar & cate_var_used_in_forest & cate_var_id_used_in_forest;
@@ -3690,7 +3734,7 @@ void BAMBOO::LoadTestingData(){
 	}
 	file_bim.close();
 	
-	cout << "Mapping markers ..." << endl;
+	cout << "Aligning markers ..." << endl;
 	vector<bool> snp_used(snp_name_test.size(), false);
 	vector<int> snp_col(snp_name_test.size(), -1);
 	
@@ -3839,6 +3883,44 @@ void BAMBOO::LoadTestingData(){
 	close(fb);
 	
 	cout << snp_used_in_forest.size() << " markers of " << nsub_test << " individuals are loaded from [ " << path_bed_test << " ] for prediction" << endl;
+	
+	//flip genotypes with MAF > .5
+	nflip_test = 0;
+	if(flip){//test if the genotypes have been correctly loaded
+		vector<bool> flipped (nsnp_test, false);
+		#pragma omp parallel num_threads(nthread)
+		{
+			#pragma omp for
+			for(int i = 0; i < nsnp_test; ++i){
+				if(!snp_used[i]){
+					continue;
+				}
+				int n0 = 0, n1 = 0, n2 = 0;
+				for(int k = 0; k < nblock_test; ++k){
+					n0 += PopCount(geno64_test[snp_col[i]*3][k]);
+					n2 += PopCount(geno64_test[snp_col[i]*3+2][k]);
+				}
+				if(n0 < n2){// flip the genotype if necessary
+					flipped[i] = true;
+					for(int k = 0; k < nblock_test; ++k){
+						uint64 u = geno64_test[snp_col[i]*3+2][k];
+						geno64_test[snp_col[i]*3+2][k] = geno64_test[snp_col[i]*3][k];
+						geno64_test[snp_col[i]*3][k] = u;
+					}
+				}
+			}
+		}
+		
+		for(int i = 0; i < nsnp_test; ++i){
+			if(flipped[i]){
+				nflip_test++;
+			}
+		}
+	}
+	
+	if(nflip_test > 0){
+		cout << nflip_test << " markers with MAF > 0.5 are flipped" << endl;
+	}
 	
 	//load continuous covariates
 	if(cont_var_used_in_forest.size() > 0){
@@ -4061,7 +4143,7 @@ void BAMBOO::SavePrediction(){
 	}
 	file_pred.close();
 	
-	cout << "The predictions of testing data have been saved in [ " << path_pred << " ]" << endl;
+	cout << "The predictions of testing data are saved in [ " << path_pred << " ]" << endl;
 	
 }
 

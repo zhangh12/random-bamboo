@@ -1,7 +1,8 @@
 ///////////////////////////////////////////////////////////////////
 //    RANDOM BAMBOO    |     v0.3.0    |   September 13, 2014    //
 //---------------------------------------------------------------//
-//      (C) 2014 Han Zhang, GNU General Public License  V3       //
+//              (C) 2014 Han Zhang, Yifan Yang                   //
+//              GNU General Public License  V3                   //
 //---------------------------------------------------------------//
 //   For documentation, citation and bug-report instructions:    //
 //           http://www.hanzhang.name/softwares/rb               //
@@ -29,7 +30,8 @@ int main(int argc, char **argv){
 	cout << "+------------------------+-------------------+---------------------+" << endl;
 	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      09/13/2014     |" << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
-	cout << "|        (C) 2014 Han Zhang, GNU General Public License, V3        |" << endl;
+	cout << "|                   (C) 2014 Han Zhang, Yifan Yang                 |" << endl;
+	cout << "|                   GNU General Public License, V3                 |" << endl;
 	cout << "+------------------------------------------------------------------+" << endl;
 	cout << "|     For documentation, citation and bug-report instructions:     |" << endl;
 	cout << "|               http://www.hanzhang.name/softwares/rb              |" << endl;
