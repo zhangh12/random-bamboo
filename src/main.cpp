@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.3.1    |   September 14, 2014    //
+//    RANDOM BAMBOO    |     v0.3.2    |   September 16, 2014    //
 //---------------------------------------------------------------//
 //              (C) 2014 Han Zhang, Yifan Yang                   //
 //              GNU General Public License  V3                   //
@@ -24,6 +24,10 @@
 //         cross validation                                      //
 //     (2) Add option --testid, the individual IDs that included //
 //         in testing stage.                                     //
+//                                                               //
+//     September 15, 2014                                        //
+//     (1) Scan information of BAM files specified in a          //
+//         directory or a single file specified by its name      //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 
@@ -108,7 +112,7 @@ int main(int argc, char **argv){
 			{0, 0, 0, 0}
 		};
 		int option_index = 0;
-		c = getopt_long(argc, argv, "f:o:c:a:p:b:h:v:t:m:s:l:e:i:d:w:u:gxnBrN", long_options, &option_index);
+		c = getopt_long(argc, argv, "f:o:c:a:p:b:h:v:t:m:s:l:e:i:d:w:u:gxnBrNI", long_options, &option_index);
 		
 		if(c == -1){
 			break;
@@ -229,20 +233,20 @@ int main(int argc, char **argv){
 		}
 	}
 	
+	
 	if(!file_spec){//no plink file is specified
-		if(!pred_spec || !bam_spec){
-			cout << "Error: The option --file must be specified. Program terminates" << endl;
+		if(!pred_spec && !bam_spec){
+			cout << "Error: The option --file must be specified" << endl;
+			return 0;
+		}else if(pred_spec && !bam_spec){
+			cout << "Error: The option --bam must be specified for prediction purpose" << endl;
+			return 0;
+		}else if(!pred_spec && bam_spec){//print the information of the specified model
+			BAMBOO bb(bam, nthread);
+			bb.PrintModelInfo();
 			return 0;
 		}else{
-			if(pred_spec && !bam_spec){
-				cout << "Error: The bamboo must be specified by option --bam for prediction purpose" << endl;
-				return 0;
-			}else if(!pred_spec && bam_spec){
-				cout << "Error: Please specify test dataset by option --pred" << endl;
-				return 0;
-			}else{
-				;//good
-			}
+			;//good
 		}
 	}else{//train model from specified data
 		bam = NULL;
@@ -276,16 +280,18 @@ int main(int argc, char **argv){
 	}
 	
 	
-	if(!file_spec && pred_spec){
+	if(!file_spec && pred_spec){//predicting testing data (--pred) using models specified in --bam
 		BAMBOO bb (out, pred, bam, testid, nthread);
 		bb.GrowForest();
 		bb.PredictTestingSample();
-	}else{
+		return 0;
+	}else{//training model, and then predicting testing data if --pred is on
 		BAMBOO bb (file, out, cont, cate, pred, trainid, testid, ntree, mtry, max_nleaf, min_leaf_size, 
 		imp_measure, seed, nthread, class_weight, cutoff, flip, output_prox, output_imp, output_bamboo, 
 		balance, trace);
 		bb.GrowForest();
 		bb.PredictTestingSample();
+		return 0;
 	}
 	
 	return 0;

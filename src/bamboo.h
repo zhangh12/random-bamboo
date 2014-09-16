@@ -17,8 +17,8 @@
 #include <boost/serialization/string.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/xml_iarchive.hpp>
-#include <boost/archive/xml_oarchive.hpp>
+#include <boost/filesystem.hpp>
+#include <iomanip>
 #include <math.h>
 #include <cmath>
 #include <algorithm>
@@ -31,6 +31,7 @@
 
 
 using namespace std;
+using namespace boost::filesystem;
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -506,6 +507,8 @@ class BAMBOO{
 		char *path_cont_test;
 		char *path_cate_test;
 		
+		string dir;
+		
 		bool snp_major;
 		
 		int mtry;
@@ -559,6 +562,8 @@ class BAMBOO{
 		
 		vector<string> individual_id;//the individual IDs of all samples involved in the final analysis (without missing phenotype and covariates)
 		vector<string> individual_id_test;//the individual IDs of all samples involved in prediction (without missing covariates)
+		
+		vector<const char*> bam_list;//when predicting testing data from several specified models in local files, bam_list store the names of BAM files in the directory specified by path_bam
 		
 		vector<string> snp_name;
 		vector<string> snp_name_test;
@@ -649,6 +654,8 @@ class BAMBOO{
 		
 		inline int PopCount(uint64 x){ return wordbits[x & 0xFFFF] + wordbits[(x >> 16) & 0xFFFF] + wordbits[(x >> 32) & 0xFFFF] + wordbits[x >> 48]; }
 		
+		void ComputeWordBits();
+		void ParseModelPath(const char *const);
 		void EncodeCont();
 		void EncodeCate();
 		void PrintPara();
@@ -687,6 +694,7 @@ class BAMBOO{
 	public:
 		
 		BAMBOO(){};
+		BAMBOO(const char *const, const int);
 		BAMBOO(const char *const, const char *const, const char * const, const char * const, 
 		const char * const, const char *const, const char *const, const int, 
 		const int, const int, const int, const int, const int, const int, const double, const double, 
@@ -694,6 +702,7 @@ class BAMBOO{
 		BAMBOO(const char *const, const char *const, const char *const, const char *const, const int);
 		~BAMBOO();
 		
+		void PrintModelInfo();
 		void GrowForest();
 		void PredictTestingSample();
 		
