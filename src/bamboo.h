@@ -689,6 +689,10 @@ class BAMBOO{
 		void LoadBamboo();
 		void LoadTestingData();
 		void PutDownTestingSampleToTree(const int, const int, int&);
+		void PutDownTestingSampleToTree(const int, const vector<MINI_NODE>&, int&);
+		void PredictTestingSampleFromSingleForest();
+		void ScanMultipleForest();
+		void PredictTestingSampleFromMultipleForest();
 		void SavePrediction();
 		
 	public:

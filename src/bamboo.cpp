@@ -1067,7 +1067,7 @@ void BAMBOO::PrintModelInfo(){
 			cout << cate_var_used_in_forest.size() << " categorical covariate(s)" << endl;
 		}
 		if(flip){
-			cout << "Markers with MAF < 0.5 are flipped" << endl;
+			cout << "Markers with MAF > 0.5 are flipped" << endl;
 		}
 	}else{
 		
@@ -1124,6 +1124,8 @@ void BAMBOO::PrintModelInfo(){
 		ncate = nca[0];
 		flip = fl[0];
 		
+		cout << nsnp << "\t" << ncont << "\t" << ncate << "\t" << flip << endl;
+		
 		ComputeWordBits();//don't forget this otherwise the PopCount function fails
 		
 		LEN = 64;
@@ -1164,16 +1166,19 @@ void BAMBOO::PrintModelInfo(){
 			MASK_offset_cate.push_back(MASK >> (k % LEN));
 		}
 		
-		bitmat snp_id_used_in_multiple_models(nforest, bitvec(nblock_snp, (uint64) 0));
-		bitmat cont_id_used_in_multiple_models(nforest, bitvec(nblock_cont, (uint64) 0));
-		bitmat cate_id_used_in_multiple_models(nforest, bitvec(nblock_cate, (uint64) 0));
+		bitmat snp_id_used_in_multiple_models64(nthread, bitvec(nblock_snp, (uint64) 0));
+		bitmat cont_id_used_in_multiple_models64(nthread, bitvec(nblock_cont, (uint64) 0));
+		bitmat cate_id_used_in_multiple_models64(nthread, bitvec(nblock_cate, (uint64) 0));
 		
-		vector<int> nt (nforest);
+		vector<int> nt (nthread, 0);
 		
 		#pragma omp parallel num_threads(nthread)
 		{
 			#pragma omp for
 			for(int i = 0; i < nforest; ++i){
+				
+				int tid = omp_get_thread_num();
+				cout << tid << " -> " << i << endl;
 				ifstream ifs(bam_list[i]);
 				if(!ifs){
 					cout << "Error: Cannot open BAM file " << bam_list[i] << endl;
@@ -1200,7 +1205,7 @@ void BAMBOO::PrintModelInfo(){
 				ar & cate_unique0 & cate_code0;
 				ar & bamboo0;
 				
-				nt[i] = bamboo0.size();
+				nt[tid] += bamboo0.size();
 				//swap is very slow but can save memory (to be confirmed)
 //				vector<vector<MINI_NODE> >().swap(bamboo0);
 //				vector<string>().swap(snp_used_in_forest0);
@@ -1209,30 +1214,28 @@ void BAMBOO::PrintModelInfo(){
 				
 				for(int k = 0; k < snp_id_used_in_forest0.size(); ++k){
 					int sid = snp_id_used_in_forest0[k];
-					snp_id_used_in_multiple_models[i][bitloc_snp[sid]] |= MASK_offset_snp[sid];
+					snp_id_used_in_multiple_models64[tid][bitloc_snp[sid]] |= MASK_offset_snp[sid];
 				}
 				
 				for(int k = 0; k < cont_var_id_used_in_forest0.size(); ++k){
 					int cid = cont_var_id_used_in_forest0[k];
-					cont_id_used_in_multiple_models[i][bitloc_cont[cid]] |= MASK_offset_cont[cid];
+					cont_id_used_in_multiple_models64[tid][bitloc_cont[cid]] |= MASK_offset_cont[cid];
 				}
 				
 				for(int k = 0; k < cate_var_id_used_in_forest0.size(); ++k){
 					int cid = cate_var_id_used_in_forest0[k];
-					cate_id_used_in_multiple_models[i][bitloc_cate[cid]] |= MASK_offset_cate[cid];
+					cate_id_used_in_multiple_models64[tid][bitloc_cate[cid]] |= MASK_offset_cate[cid];
 				}
 				
 			}
 			
 		}
 		
-		cout << "model loaded" << endl;
-		
 		int nsnp_used = 0;
 		for(int j = 0; j < nblock_snp; ++j){
 			uint64 u = (uint64) 0;
-			for(int l = 0; l < nforest; ++l){
-				u |= snp_id_used_in_multiple_models[l][j];
+			for(int l = 0; l < nthread; ++l){
+				u |= snp_id_used_in_multiple_models64[l][j];
 			}
 			nsnp_used += PopCount(u);
 		}
@@ -1240,8 +1243,8 @@ void BAMBOO::PrintModelInfo(){
 		int ncont_used = 0;
 		for(int j = 0; j < nblock_cont; ++j){
 			uint64 u = (uint64) 0;
-			for(int l = 0; l < nforest; ++l){
-				u |= cont_id_used_in_multiple_models[l][j];
+			for(int l = 0; l < nthread; ++l){
+				u |= cont_id_used_in_multiple_models64[l][j];
 			}
 			ncont_used += PopCount(u);
 		}
@@ -1249,14 +1252,14 @@ void BAMBOO::PrintModelInfo(){
 		int ncate_used = 0;
 		for(int j = 0; j < nblock_cate; ++j){
 			uint64 u = (uint64) 0;
-			for(int l = 0; l < nforest; ++l){
-				u |= cate_id_used_in_multiple_models[l][j];
+			for(int l = 0; l < nthread; ++l){
+				u |= cate_id_used_in_multiple_models64[l][j];
 			}
 			ncate_used += PopCount(u);
 		}
 		
 		ntree = 0;
-		for(int j = 0; j < nforest; ++j){
+		for(int j = 0; j < nthread; ++j){
 			ntree += nt[j];
 		}
 		
@@ -1270,7 +1273,7 @@ void BAMBOO::PrintModelInfo(){
 			cout << ncate_used << " categorical covariate(s)" << endl;
 		}
 		if(flip){
-			cout << "Markers with MAF < 0.5 are flipped" << endl;
+			cout << "Markers with MAF > 0.5 are flipped" << endl;
 		}
 	}
 	
@@ -1305,7 +1308,7 @@ void BAMBOO::ParseModelPath(const char *const input_path_bam){
       	path_bam = strdup(bl[0].string().c_str());
       	bam_list.push_back(path_bam);
       }else{
-      	path_bam = NULL;
+      	path_bam = NULL;//set it as NULL if more than one bam are used in prediction
       	for(int i = 0; i < bl.size(); ++i){
       		bam_list.push_back(strdup(bl[i].string().c_str()));
       	}
@@ -1323,7 +1326,8 @@ void BAMBOO::ParseModelPath(const char *const input_path_bam){
 		strcat(path_bam, ".bam");
 		path file(path_bam);
 		if(is_regular_file(file)){
-			cout << file << " is a file with size " << file_size(file) << endl;
+			bam_list.push_back(path_bam);
+			//cout << file << " is a file with size " << file_size(file) << endl;
 		}else{
 			cout << "Error: Invalid input of --bam. It should be a BAM file's name (no extension) or a directory" << endl;
 			exit(1);
@@ -1331,12 +1335,16 @@ void BAMBOO::ParseModelPath(const char *const input_path_bam){
 		bam_list.push_back(path_bam);
 	}
 	
+	
 }
 
 BAMBOO::BAMBOO(const char *const input_path_bam, const int input_nthread){
 	
 	nthread = input_nthread;
 	ParseModelPath(input_path_bam);
+	
+	pred_from_trained_model = false;
+	pred_from_specified_model = false;
 		
 }
 
@@ -1369,10 +1377,7 @@ BAMBOO::BAMBOO(const char *const input_path_out, const char *const input_path_te
 	strcat(path_bed_test, ".bed");
 	strcat(path_pred, ".prd");
 	
-	path_bam = new char[strlen(input_path_bam)+5];
-	path_bam[0] = '\0';
-	strcat(path_bam, input_path_bam);
-	strcat(path_bam, ".bam");
+	ParseModelPath(input_path_bam);
 	
 	path_cont_test = new char[strlen(input_path_test)+5];
 	path_cont_test[0] = '\0';
@@ -3832,7 +3837,7 @@ void BAMBOO::LoadBamboo(){
 
 void BAMBOO::LoadTestingData(){
 	
-	if(!(pred_from_specified_model || pred_from_trained_model)){
+	if(!pred_from_specified_model && !pred_from_trained_model){
 		return;
 	}
 	
@@ -4366,7 +4371,7 @@ void BAMBOO::LoadTestingData(){
 	
 	if(nflip_test > 0){
 		cout << nflip_test << " markers with MAF > 0.5 are flipped" << endl;
-	}
+	};
 	
 	//load continuous covariates
 	if(cont_var_used_in_forest.size() > 0){
@@ -4562,9 +4567,76 @@ void BAMBOO::PutDownTestingSampleToTree(const int sample_id, const int tree_id,
 }
 
 
-void BAMBOO::SavePrediction(){
+void BAMBOO::PutDownTestingSampleToTree(const int sample_id, const vector<MINI_NODE>& rb, 
+	int &fall_into_node_id){
 	
-	ntree = bamboo.size();
+	if(sample_id < 0 || sample_id >= nsub_test){
+		cout << "Error: Invalid sample ID in PutDownTestingSampleToTree" << endl;
+		exit(1);
+	}
+	
+	vector<bool> track_path_to_left;//true if to the left
+	
+	const MINI_NODE *mini_node = &(rb[0]);
+	bool direction = true;//true if to the left, false if to the right
+	while(!(*mini_node).terminal){
+		if((*mini_node).split_by == CODE_SNP){
+			int snp_id = (*mini_node).split_snp_id;
+			int snp_left_val = (*mini_node).split_snp_left_val;
+			if(snp_left_val == 0){//snp == 0 are going to the left
+				direction = 
+				(geno64_test[snp_id * 3][bitloc_test[sample_id]] & MASK_offset_test[sample_id]) ? true : false;//true if snp == 0
+			}else if(snp_left_val == 1){//snp == 0 or are going to the left
+				direction = (geno64_test[snp_id * 3 + 2][bitloc_test[sample_id]] & MASK_offset_test[sample_id]) ? false : true;//false if snp == 2
+			}else{//impossible
+				cout << "Error: Invalide snp_left_val when predicting samples" << endl;
+				exit(1);
+			}
+		}else if((*mini_node).split_by == CODE_CONT){
+			int cont_id = (*mini_node).split_cont_id;
+			direction = (xcont_test[cont_id][sample_id] <= (*mini_node).split_cont_thr) ? true : false;//true if <= threshold
+		}else if((*mini_node).split_by == CODE_CATE){
+			int cate_id = (*mini_node).split_cate_id;
+			int size_left = (*mini_node).split_cate_left_code.size();
+			int size_right = (*mini_node).split_cate_right_code.size();
+			int c = xcate_int_test[cate_id][sample_id];
+			if(size_left < size_right){
+				direction = false;
+				for(int ii = 0; ii < size_left; ++ii){
+					if(c == (*mini_node).split_cate_left_code[ii]){
+						direction = true;
+						break;
+					}
+				}
+			}else{
+				direction = true;
+				for(int ii = 0; ii < (*mini_node).split_cate_right_code.size(); ++ii){
+					if(c == (*mini_node).split_cate_right_code[ii]){
+						direction = false;
+						break;
+					}
+				}
+			}
+		}else{//impossible
+			cout << "Error: Invalid splitting code in mini_node.split_by" << endl;
+			exit(1);
+		}
+		
+		if(direction){
+			mini_node = &(rb[(*mini_node).ichild1]);
+			track_path_to_left.push_back(true);
+		}else{
+			mini_node = &(rb[(*mini_node).ichild2]);
+			track_path_to_left.push_back(false);
+		}
+	}
+	
+	fall_into_node_id = (*mini_node).node_id;
+
+}
+
+
+void BAMBOO::SavePrediction(){
 	
 	ofstream file_pred;
 	file_pred.open(path_pred);
@@ -4593,19 +4665,443 @@ void BAMBOO::SavePrediction(){
 	
 }
 
+void BAMBOO::ScanMultipleForest(){
+	
+	int nforest = bam_list.size();
+	if(nforest == 0){
+		cout << "Error: Cannot find trained models for prediction" << endl;
+		exit(1);
+	}else if(nforest == 1){
+		cout << "Error: debug in ScanMultipleForest" << endl;
+		exit(1);
+	}else{//good
+		;
+	}
+	
+	vector<string> ver(nforest);
+	vector<int> ns(nforest);
+	vector<int> nco(nforest);
+	vector<int> nca(nforest);
+	vector<bool> fl(nforest);
+	
+	//scan all models to see if we can combine them into a single model
+	for(int i = 0; i < nforest; ++i){
+		ifstream ifs(bam_list[i]);
+		if(!ifs){
+			cout << "Error: Cannot open BAM file " << bam_list[i] << endl;
+			exit(1);
+		}
+		
+		boost::archive::binary_iarchive ar(ifs);
+		
+		string ver0;
+		int ns0, nco0, nca0;
+		bool fl0;
+		ar & ver0;
+		ar & ns0 & nco0 & nca0;
+		ar & fl0;
+		
+		ver[i] = ver0;
+		ns[i] = ns0;
+		nco[i] = nco0;
+		nca[i] = nca0;
+		fl[i] = fl0;
+		
+	}
+	
+	for(int i = 1; i < nforest; ++i){
+		if(ver[i] != ver[0]){
+			cout << "Error: The specified models are built with Random Bamboo with different versions" << endl;
+			exit(1);
+		}
+		
+		if(ns[i] != ns[0] || nco[i] != nco[0] || nca[i] != nca[i]){
+			cout << "Error: The specified models are built with different training data" << endl;
+			exit(1);
+		}
+		
+		if(fl[i] != fl[0]){
+			cout << "Error: Some of the specified models flip the genotypes but others do not" << endl;
+			exit(1);
+		}
+	}
+	
+	nsnp = ns[0];
+	ncont = nco[0];
+	ncate = nca[0];
+	flip = fl[0];
+	
+	ComputeWordBits();//don't forget this otherwise the PopCount function fails
+	
+	LEN = 64;
+	int nblock_snp = (int) ceil (((double) nsnp) / LEN);
+	int nblock_cont = (int) ceil (((double) ncont) / LEN);
+	int nblock_cate = (int) ceil (((double) ncate) / LEN);
+	
+	vector<int> bitloc_snp;
+	vector<int> bitloc_cont;
+	vector<int> bitloc_cate;
+	
+	bitvec MASK_offset_snp;
+	bitvec MASK_offset_cont;
+	bitvec MASK_offset_cate;
+	
+	bitloc_snp.reserve(nsnp);
+	bitloc_cont.reserve(ncont);
+	bitloc_cate.reserve(ncate);
+	
+	MASK_offset_snp.reserve(nsnp);
+	MASK_offset_cont.reserve(ncont);
+	MASK_offset_cate.reserve(ncate);
+	
+	MASK = 0x8000000000000000;
+	
+	for(int k = 0; k < nsnp; ++k){
+		bitloc_snp.push_back(k / LEN);
+		MASK_offset_snp.push_back(MASK >> (k % LEN));
+	}
+	
+	for(int k = 0; k < ncont; ++k){
+		bitloc_cont.push_back(k / LEN);
+		MASK_offset_cont.push_back(MASK >> (k % LEN));
+	}
+	
+	for(int k = 0; k < ncate; ++k){
+		bitloc_cate.push_back(k / LEN);
+		MASK_offset_cate.push_back(MASK >> (k % LEN));
+	}
+	
+	bitmat snp_id_used_in_multiple_models64(nthread, bitvec(nblock_snp, (uint64) 0));
+	bitmat cont_var_id_used_in_multiple_models64(nthread, bitvec(nblock_cont, (uint64) 0));
+	bitmat cate_var_id_used_in_multiple_models64(nthread, bitvec(nblock_cate, (uint64) 0));
+	
+	vector<vector<string> > snp_used_in_multiple_model(nthread, vector<string> (nsnp, string("")));
+	vector<vector<string> > cont_var_used_in_multiple_model(nthread, vector<string> (ncont, string("")));
+	vector<vector<string> > cate_var_used_in_multiple_model(nthread, vector<string> (ncate, string("")));
+	
+	vector<int> nt (nthread, 0);
+	
+	#pragma omp parallel num_threads(nthread)
+	{
+		#pragma omp for
+		for(int i = 0; i < nforest; ++i){
+			
+			int tid = omp_get_thread_num();
+			
+			ifstream ifs(bam_list[i]);
+			if(!ifs){
+				cout << "Error: Cannot open BAM file " << bam_list[i] << endl;
+				exit(1);
+			}
+			
+			boost::archive::binary_iarchive ar(ifs);
+			
+			string version0;
+			int nsnp0, ncont0, ncate0;
+			bool flip0;
+			vector<string> snp_used_in_forest0, cont_var_used_in_forest0, cate_var_used_in_forest0;
+			vector<int> snp_id_used_in_forest0, cont_var_id_used_in_forest0, cate_var_id_used_in_forest0;
+			vector<vector<string> > cate_unique0;
+			vector<vector<int> > cate_code0;
+			vector<vector<MINI_NODE> > bamboo0;
+				
+			ar & version0;
+			ar & nsnp0 & ncont0 & ncate0;
+			ar & flip0;
+			ar & snp_used_in_forest0 & snp_id_used_in_forest0;
+			ar & cont_var_used_in_forest0 & cont_var_id_used_in_forest0;
+			ar & cate_var_used_in_forest0 & cate_var_id_used_in_forest0;
+			ar & cate_unique0 & cate_code0;
+			ar & bamboo0;
+			
+			if(i == 0){
+				cate_unique = cate_unique0;
+				cate_code = cate_code0;
+			}
+			
+			nt[tid] += bamboo0.size();
+			//swap is very slow but can save memory (to be confirmed)
+//				vector<vector<MINI_NODE> >().swap(bamboo0);
+//				vector<string>().swap(snp_used_in_forest0);
+//				vector<string>().swap(cont_var_used_in_forest0);
+//				vector<string>().swap(cate_var_used_in_forest0);
+			
+			for(int k = 0; k < snp_id_used_in_forest0.size(); ++k){
+				int sid = snp_id_used_in_forest0[k];
+				snp_id_used_in_multiple_models64[tid][bitloc_snp[sid]] |= MASK_offset_snp[sid];
+				snp_used_in_multiple_model[tid][sid] = snp_used_in_forest0[k];
+			}
+			
+			for(int k = 0; k < cont_var_id_used_in_forest0.size(); ++k){
+				int cid = cont_var_id_used_in_forest0[k];
+				cont_var_id_used_in_multiple_models64[tid][bitloc_cont[cid]] |= MASK_offset_cont[cid];
+				cont_var_used_in_multiple_model[tid][cid] = cont_var_used_in_forest0[k];
+			}
+			
+			for(int k = 0; k < cate_var_id_used_in_forest0.size(); ++k){
+				int cid = cate_var_id_used_in_forest0[k];
+				cate_var_id_used_in_multiple_models64[tid][bitloc_cate[cid]] |= MASK_offset_cate[cid];
+				cate_var_used_in_multiple_model[tid][cid] = cate_var_used_in_forest0[k];
+			}
+			
+		}
+		
+	}
+	
+	
+	ntree = 0;
+	for(int j = 0; j < nthread; ++j){
+		ntree += nt[j];
+	}
+	
+	bitvec vec;
+	vec = bitvec (nblock_snp, (uint64) 0);
+	int nsnp_used = 0;
+	for(int i = 0; i < nblock_snp; ++i){
+		uint64 u = (uint64) 0;
+		for(int j = 0; j < nthread; ++j){
+			u |= snp_id_used_in_multiple_models64[j][i];
+		}
+		vec[i] = u;
+		nsnp_used += PopCount(u);
+	}
+	
+	if(!snp_used_in_forest.empty()){
+		snp_used_in_forest.clear();
+	}
+	
+	snp_used_in_forest.reserve(nsnp_used);
+	
+	if(!snp_id_used_in_forest.empty()){
+		snp_id_used_in_forest.clear();
+	}
+	
+	snp_id_used_in_forest.reserve(nsnp_used);
+	
+	for(int i = 0; i < nsnp; ++i){
+		if(vec[bitloc_snp[i]] & MASK_offset_snp[i]){
+			snp_id_used_in_forest.push_back(i);
+			
+			for(int j = 0; j < nthread; ++j){
+				if(snp_used_in_multiple_model[j][i] != string("")){
+					snp_used_in_forest.push_back(snp_used_in_multiple_model[j][i]);
+					break;
+				}
+			}
+		}
+	}
+	
+	vec = bitvec (nblock_cont, (uint64) 0);
+	int ncont_used = 0;
+	for(int i = 0; i < nblock_cont; ++i){
+		uint64 u = (uint64) 0;
+		for(int j = 0; j < nthread; ++j){
+			u |= cont_var_id_used_in_multiple_models64[j][i];
+		}
+		vec[i] = u;
+		ncont_used += PopCount(u);
+	}
+	
+	
+	if(!cont_var_used_in_forest.empty()){
+		cont_var_used_in_forest.clear();
+	}
+	
+	cont_var_used_in_forest.reserve(ncont_used);
+	
+	if(!cont_var_id_used_in_forest.empty()){
+		cont_var_id_used_in_forest.clear();
+	}
+	
+	cont_var_id_used_in_forest.reserve(ncont_used);
+	
+	for(int i = 0; i < ncont; ++i){
+		if(vec[bitloc_cont[i]] & MASK_offset_cont[i]){
+			cont_var_id_used_in_forest.push_back(i);
+			
+			for(int j = 0; j < nthread; ++j){
+				if(cont_var_used_in_multiple_model[j][i] != string("")){
+					cont_var_used_in_forest.push_back(cont_var_used_in_multiple_model[j][i]);
+					break;
+				}
+			}
+		}
+	}
+	
+	vec = bitvec (nblock_cate, (uint64) 0);
+	int ncate_used = 0;
+	for(int i = 0; i < nblock_cate; ++i){
+		uint64 u = (uint64) 0;
+		for(int j = 0; j < nthread; ++j){
+			u |= cate_var_id_used_in_multiple_models64[j][i];
+		}
+		vec[i] = u;
+		ncate_used += PopCount(u);
+	}
+	
+	
+	if(!cate_var_used_in_forest.empty()){
+		cate_var_used_in_forest.clear();
+	}
+	
+	cate_var_used_in_forest.reserve(ncate_used);
+	
+	if(!cate_var_id_used_in_forest.empty()){
+		cate_var_id_used_in_forest.clear();
+	}
+	
+	cate_var_id_used_in_forest.reserve(ncate_used);
+	
+	for(int i = 0; i < ncate; ++i){
+		if(vec[bitloc_cate[i]] & MASK_offset_cate[i]){
+			cate_var_id_used_in_forest.push_back(i);
+			
+			for(int j = 0; j < nthread; ++j){
+				if(cate_var_used_in_multiple_model[j][i] != string("")){
+					cate_var_used_in_forest.push_back(cate_var_used_in_multiple_model[j][i]);
+					break;
+				}
+			}
+		}
+	}
+	
+	cout << "The " << bam_list.size() << " models in [ " << dir << " ] includes: " << endl;
+	cout << ntree << " bamboos" << endl;
+	cout << nsnp_used << " markers" << endl;
+	if(ncont_used > 0){
+		cout << ncont_used << " continuous covariate(s)" << endl;
+	}
+	if(ncate_used > 0){
+		cout << ncate_used << " categorical covariate(s)" << endl;
+	}
+	if(flip){
+		cout << "Markers with MAF > 0.5 are flipped" << endl;
+	}
+	
+	has_cont = cont_var_used_in_forest.size() ? true : false;
+	has_cate = cate_var_used_in_forest.size() ? true : false;
+	
+}
 
-void BAMBOO::PredictTestingSample(){
+//this function is called only if --pred and --bam are specified, --bam is set as a directory containing more than one .bam files, 
+//and --file is not specified. In this case, path_bam is set as NULL in ParseModelPath() and the names of .bam files are stored in bam_list
+void BAMBOO::PredictTestingSampleFromMultipleForest(){
 	
 	if(!pred_from_specified_model && !pred_from_trained_model){
 		return;
 	}
 	
-	cout << "Random Bamboo is launched for predicting data ..." << endl;
+	time_t start = time(NULL);
+	
+	ScanMultipleForest();//find those markers used in the whole model
+	LoadTestingData();
+	
+	vector<vector<double> > post_prob_case1_test_omp (nthread, vector<double> (nsub_test, .0));
+	vector<vector<double> > tmp0_omp (nthread, vector<double> (nsub_test, .0));
+	vector<vector<double> > tmp1_omp (nthread, vector<double> (nsub_test, .0));
+	
+	int nforest = bam_list.size();
+	
+	#pragma omp parallel num_threads(nthread)
+	{
+		
+		#pragma omp for
+		for(int i = 0; i < nforest; ++i){
+			
+			int tid = omp_get_thread_num();
+			ifstream ifs(bam_list[i]);
+			if(!ifs){
+				cout << "Error: Cannot open BAM file " << bam_list[i] << endl;
+				exit(1);
+			}
+			boost::archive::binary_iarchive ar(ifs);
+			
+			string version0;
+			int nsnp0, ncont0, ncate0;
+			bool flip0;
+			vector<string> snp_used_in_forest0, cont_var_used_in_forest0, cate_var_used_in_forest0;
+			vector<int> snp_id_used_in_forest0, cont_var_id_used_in_forest0, cate_var_id_used_in_forest0;
+			vector<vector<string> > cate_unique0;
+			vector<vector<int> > cate_code0;
+			vector<vector<MINI_NODE> > bamboo0;
+			
+			ar & version0;
+			ar & nsnp0 & ncont0 & ncate0;
+			ar & flip0;
+			ar & snp_used_in_forest0 & snp_id_used_in_forest0;
+			ar & cont_var_used_in_forest0 & cont_var_id_used_in_forest0;
+			ar & cate_var_used_in_forest0 & cate_var_id_used_in_forest0;
+			ar & cate_unique0 & cate_code0;
+			ar & bamboo0;
+			
+			int nt = bamboo0.size();
+			
+			for(int sample_id = 0; sample_id < nsub_test; ++sample_id){
+				
+				for(int tree_id = 0; tree_id < nt; ++tree_id){
+					int fall_into_node_id = -1;
+					PutDownTestingSampleToTree(sample_id, bamboo0[tree_id], fall_into_node_id);
+					if(fall_into_node_id >= 0 && fall_into_node_id < bamboo0[tree_id].size()){
+						double r0 = bamboo0[tree_id][fall_into_node_id].node_risk_ctrl;
+						double r1 = bamboo0[tree_id][fall_into_node_id].node_risk_case;
+						post_prob_case1_test_omp[tid][sample_id] += r0 / (r0 + r1);
+						tmp0_omp[tid][sample_id] += r0;
+						tmp1_omp[tid][sample_id] += r1;
+					}else{
+						cout << "Error: Cannot assign sample " << sample_id + 1 << " in testing data to any leaf of the tree " << tree_id + 1 << " in " << bam_list[i] << endl;
+						exit(1);
+					}
+				}
+			}
+			
+		}
+		
+	}
+	
+	post_prob_case1_test = vector<double> (nsub_test, .0);
+	post_prob_case2_test = vector<double> (nsub_test, .0);
+	vector<double> tmp0 (nsub_test, .0);
+	vector<double> tmp1 (nsub_test, .0);
+	
+	#pragma omp parallel num_threads(nthread)
+	{
+		#pragma omp for
+		for(int i = 0; i < nsub_test; ++i){
+			for(int j = 0; j < nthread; ++j){
+				post_prob_case1_test[i] += post_prob_case1_test_omp[j][i];
+				tmp0[i] += tmp0_omp[j][i];
+				tmp1[i] += tmp1_omp[j][i];
+			}
+			
+			post_prob_case1_test[i] /= ntree;
+			post_prob_case2_test[i] = tmp0[i] / (tmp0[i] + tmp1[i]);
+		}
+	}
+	
+	SavePrediction();
+	
+	time_t complete_time;
+	time(&complete_time);
+	cout << "Prediction accomplished: " << ctime(&complete_time);
+	
+	
+	time_t end = time(NULL);
+	cout << "Elapsed time: " << (end - start) / 3600 << "h " << ((end - start) % 3600) / 60 << "m " << (end - start) % 60 << "s" << endl;
+	
+}
+
+
+void BAMBOO::PredictTestingSampleFromSingleForest(){
+	
+	if(!pred_from_specified_model && !pred_from_trained_model){
+		return;
+	}
 	
 	time_t start = time(NULL);
 	
 	LoadBamboo();
 	LoadTestingData();
+	cout << "model engaged" << endl;
 	
 	ntree = bamboo.size();
 	
@@ -4655,6 +5151,15 @@ void BAMBOO::PredictTestingSample(){
 	
 }
 
+void BAMBOO::PredictTestingSample(){
+	
+	if(bam_list.size() > 1){
+		PredictTestingSampleFromMultipleForest();
+	}else{
+		PredictTestingSampleFromSingleForest();
+	}
+	
+}
 
 
 

@@ -29,6 +29,9 @@
 //     (1) Scan information of BAM files specified in a          //
 //         directory or a single file specified by its name      //
 //                                                               //
+//     September 17, 2014                                        //
+//     (1) Load all BAM files in specified folder in prediction  //
+//                                                               //
 ///////////////////////////////////////////////////////////////////
 
 
@@ -57,8 +60,8 @@ int main(int argc, char **argv){
 	char *cate = NULL;//a
 	char *pred = NULL;//p
 	char *bam = NULL;//b
-	char *trainid = NULL;//h
-	char *testid = NULL;//v
+	char *trainid = NULL;//y
+	char *testid = NULL;//z
 	
 	int ntree = 1;//t
 	int mtry = 0;//m
@@ -92,8 +95,8 @@ int main(int argc, char **argv){
 			{"cate", 1, NULL, 'a'},
 			{"pred", 1, NULL, 'p'},
 			{"bam", 1, NULL, 'b'},
-			{"trainid", 1, NULL, 'h'},
-			{"testid", 1, NULL, 'v'},
+			{"trainid", 1, NULL, 'y'},
+			{"testid", 1, NULL, 'z'},
 			{"ntree", 1, NULL, 't'},
 			{"mtry", 1, NULL, 'm'},
 			{"seed", 1, NULL, 's'},
@@ -109,10 +112,15 @@ int main(int argc, char **argv){
 			{"balance", 0, NULL, 'B'},
 			{"trace", 0, NULL, 'r'},
 			{"nobamboo", 0, NULL, 'N'},
+			{"help", 0, NULL, 'h'},
+			{"version", 0, NULL, 'v'},
 			{0, 0, 0, 0}
 		};
+		
+		//jkq
+		
 		int option_index = 0;
-		c = getopt_long(argc, argv, "f:o:c:a:p:b:h:v:t:m:s:l:e:i:d:w:u:gxnBrNI", long_options, &option_index);
+		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:t:m:s:l:e:i:d:w:u:gxnBrNI", long_options, &option_index);
 		
 		if(c == -1){
 			break;
@@ -141,10 +149,10 @@ int main(int argc, char **argv){
 				bam = optarg;
 				bam_spec = true;
 				break;
-			case 'h':
+			case 'y':
 				trainid = optarg;
 				break;
-			case 'v':
+			case 'z':
 				testid = optarg;
 				break;
 			case 't':
@@ -282,7 +290,6 @@ int main(int argc, char **argv){
 	
 	if(!file_spec && pred_spec){//predicting testing data (--pred) using models specified in --bam
 		BAMBOO bb (out, pred, bam, testid, nthread);
-		bb.GrowForest();
 		bb.PredictTestingSample();
 		return 0;
 	}else{//training model, and then predicting testing data if --pred is on

@@ -1,6 +1,6 @@
 reset
-rm bamboo3
-g++ main.cpp bamboo.cpp -o bamboo3 -O3 -fopenmp -L/data/zhangh12/boost/lib -lboost_filesystem -lboost_system -lboost_serialization
+rm bamboo
+g++ main.cpp bamboo.cpp -o bamboo -O3 -fopenmp -L/data/zhangh12/boost/lib -lboost_filesystem -lboost_system -lboost_serialization
 
 
 
