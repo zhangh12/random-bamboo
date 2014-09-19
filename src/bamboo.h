@@ -493,6 +493,8 @@ class BAMBOO{
 		char *path_cate;
 		char *path_trainid;
 		char *path_testid;
+		char *path_snpid;
+		
 		char *path_prox;
 		char *path_imp;
 		char *path_bam;
@@ -547,6 +549,7 @@ class BAMBOO{
 		
 		int nsub; //sample size
 		int nsnp; //number of SNPs
+		int nsnp_specified; //number of SNPs to be used in training
 		int ncase; //number of cases
 		int nctrl; //number of controls
 		int ncont; //number of continuous covariates
@@ -559,6 +562,9 @@ class BAMBOO{
 		
 		vector<string> specified_trainid;
 		vector<string> specified_testid;
+		vector<string> specified_snpid;
+		
+		vector<int> inc_snp_id;//include snp in training
 		
 		vector<string> individual_id;//the individual IDs of all samples involved in the final analysis (without missing phenotype and covariates)
 		vector<string> individual_id_test;//the individual IDs of all samples involved in prediction (without missing covariates)
@@ -700,7 +706,7 @@ class BAMBOO{
 		BAMBOO(){};
 		BAMBOO(const char *const, const int);
 		BAMBOO(const char *const, const char *const, const char * const, const char * const, 
-		const char * const, const char *const, const char *const, const int, 
+		const char * const, const char *const, const char *const, const char *const, const int, 
 		const int, const int, const int, const int, const int, const int, const double, const double, 
 		const bool, const bool, const bool, const bool, const bool, const bool);
 		BAMBOO(const char *const, const char *const, const char *const, const char *const, const int);

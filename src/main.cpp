@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.3.2    |   September 16, 2014    //
+//    RANDOM BAMBOO    |     v0.3.3    |   September 19, 2014    //
 //---------------------------------------------------------------//
 //              (C) 2014 Han Zhang, Yifan Yang                   //
 //              GNU General Public License  V3                   //
@@ -19,7 +19,7 @@
 //         is wrong                                              //
 //                                                               //
 //     September 14, 2014                                        //
-//     (1) Add option --trainid, the individual IDs that         //
+//     (1) Add option --trainid, the individual IDs that are     //
 //         included in training stage. This option is useful in  //
 //         cross validation                                      //
 //     (2) Add option --testid, the individual IDs that included //
@@ -31,6 +31,10 @@
 //                                                               //
 //     September 17, 2014                                        //
 //     (1) Load all BAM files in specified folder in prediction  //
+//                                                               //
+//     September 19, 2014                                        //
+//     (1) Add option --snpid, the SNPs that are included in     //
+//         training stage.                                       //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 
@@ -44,7 +48,7 @@ int main(int argc, char **argv){
 	
 	cout << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
-	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      09/14/2014     |" << endl;
+	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      09/19/2014     |" << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
 	cout << "|                   (C) 2014 Han Zhang, Yifan Yang                 |" << endl;
 	cout << "|                   GNU General Public License, V3                 |" << endl;
@@ -62,6 +66,7 @@ int main(int argc, char **argv){
 	char *bam = NULL;//b
 	char *trainid = NULL;//y
 	char *testid = NULL;//z
+	char *snpid = NULL;//S
 	
 	int ntree = 1;//t
 	int mtry = 0;//m
@@ -97,6 +102,7 @@ int main(int argc, char **argv){
 			{"bam", 1, NULL, 'b'},
 			{"trainid", 1, NULL, 'y'},
 			{"testid", 1, NULL, 'z'},
+			{"snpid", 1, NULL, 'S'},
 			{"ntree", 1, NULL, 't'},
 			{"mtry", 1, NULL, 'm'},
 			{"seed", 1, NULL, 's'},
@@ -120,7 +126,7 @@ int main(int argc, char **argv){
 		//jkq
 		
 		int option_index = 0;
-		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:t:m:s:l:e:i:d:w:u:gxnBrNI", long_options, &option_index);
+		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:S:t:m:s:l:e:i:d:w:u:gxnBrNI", long_options, &option_index);
 		
 		if(c == -1){
 			break;
@@ -154,6 +160,9 @@ int main(int argc, char **argv){
 				break;
 			case 'z':
 				testid = optarg;
+				break;
+			case 'S':
+				snpid = optarg;
 				break;
 			case 't':
 				ntree = atoi(optarg);
@@ -293,7 +302,7 @@ int main(int argc, char **argv){
 		bb.PredictTestingSample();
 		return 0;
 	}else{//training model, and then predicting testing data if --pred is on
-		BAMBOO bb (file, out, cont, cate, pred, trainid, testid, ntree, mtry, max_nleaf, min_leaf_size, 
+		BAMBOO bb (file, out, cont, cate, pred, trainid, testid, snpid, ntree, mtry, max_nleaf, min_leaf_size, 
 		imp_measure, seed, nthread, class_weight, cutoff, flip, output_prox, output_imp, output_bamboo, 
 		balance, trace);
 		bb.GrowForest();

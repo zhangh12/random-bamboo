@@ -663,6 +663,66 @@ void BAMBOO::LoadTrainingData(){
 	
 	nvar = nsnp + ncont + ncate;
 	
+	
+	if(path_snpid){
+		ifstream file_snpid(path_snpid);
+		if(!file_snpid){
+			cout << "Error: Cannot open SID file " << path_snpid << " to load SNP list" << endl;
+			exit(1);
+		}
+		
+		for(string s; getline(file_snpid, s); ){
+			istringstream sin(s);
+			string sid;
+			sin >> sid;
+			specified_snpid.push_back(sid);
+		}
+		file_snpid.close();
+		
+		if(specified_snpid.size() == 0){
+			cout << "Warning: No SNP is specified in file " << path_snpid << ". All SNPs will be used in training" << endl;
+			specified_snpid = snp_name;
+			nsnp_specified = nsnp;
+			inc_snp_id = vector<int> (nsnp, -1);
+			for(int i = 0; i < nsnp; ++i){
+				inc_snp_id[i] = i;
+			}
+		}else{
+			nsnp_specified = specified_snpid.size();
+			cout << nsnp_specified << " SNPs in [ " << path_snpid << " are used in training" << endl;
+			inc_snp_id.clear();
+			
+			#pragma omp parallel num_threads(nthread)
+			{
+				#pragma omp for
+				for(int i = 0; i < nsnp; ++i){
+					string str = snp_name[i];
+					for(int j = 0; j < nsnp_specified; ++j){
+						if(str == specified_snpid[j]){
+							inc_snp_id.push_back(i);
+							break;
+						}
+					}
+				}
+			}
+			
+			specified_snpid.clear();
+			for(int i = 0; i < inc_snp_id.size(); ++i){
+				specified_snpid.push_back(snp_name[inc_snp_id[i]]);
+			}
+			nsnp_specified = specified_snpid.size();
+			
+		}
+		
+	}else{
+		specified_snpid = snp_name;
+		nsnp_specified = nsnp;
+		inc_snp_id = vector<int> (nsnp, -1);
+		for(int i = 0; i < nsnp; ++i){
+			inc_snp_id[i] = i;
+		}
+	}
+	
 	////
 	
 	//load genotypes by memory mapping
@@ -1408,7 +1468,7 @@ BAMBOO::BAMBOO(const char *const input_path_out, const char *const input_path_te
 BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_out, 
 	const char * const input_path_cont, const char * const input_path_cate, 
 	const char *const input_path_test, const char *const input_path_trainid, 
-	const char *const input_path_testid, 
+	const char *const input_path_testid, const char *const input_path_snpid, 
 	const int input_ntree, const int input_mtry, const int input_max_nleaf, 
 	const int input_min_leaf_size, const int input_imp_measure, const int input_seed, 
 	const int input_nthread, const double input_class_weight, const double input_cutoff, 
@@ -1492,6 +1552,15 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 		path_trainid = NULL;
 	}
 	
+	if(input_path_snpid){
+		path_snpid = new char[strlen(input_path_snpid)+5];
+		path_snpid[0] = '\0';
+		strcat(path_snpid, input_path_snpid);
+		strcat(path_snpid, ".sid");
+	}else{
+		path_snpid = NULL;
+	}
+	
 	ComputeWordBits();
 	
 	LoadTrainingData();
@@ -1567,9 +1636,9 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	}
 	
 	if(!mtry){// 0 is the default value of input_mtry, in that case, the "sqrt" rule is applied
-		mtry = (int) sqrt(1.0 * nvar);
+		mtry = (int) sqrt(1.0 * (nsnp_specified + ncont + ncate));
 	}else{
-		if(mtry > nvar){
+		if(mtry > nsnp_specified + ncont + ncate){
 			cout << "Error: Too large mtry" << endl;
 			exit(1);
 		}
@@ -1766,14 +1835,38 @@ void BAMBOO::Bootstrap(const int tree_id, drand48_data &buf, bitmat &y64_omp, bi
 }
 
 //sel_snp_id_omp: storing the selected SNP ids used as the candidates for node splitting
+//void BAMBOO::ShuffleSNP(drand48_data &buf, vector<int> &sel_snp_id_omp){
+//	
+//	vector<int> snp_id (nsnp, -1);//index of snp id, initialized to 1:nsnp
+//	for(int i = 0; i < nsnp; ++i){
+//		snp_id[i] = i;
+//	}
+//	
+//	for(int k = nsnp - 1; k > 0; --k){
+//		long int li;
+//		lrand48_r(&buf, &li);
+//		int j = li % (k + 1);
+//		int s = snp_id[j];
+//		snp_id[j] = snp_id[k];
+//		snp_id[k] = s;
+//	}
+//	
+//	if(!sel_snp_id_omp.empty()){
+//		sel_snp_id_omp.clear();
+//	}
+//	
+//	for(int i = 0; i < mtry; ++i){//selecte the top mtry SNPs to split a node
+//		sel_snp_id_omp.push_back(snp_id[i]);
+//	}
+//	sort(sel_snp_id_omp.begin(), sel_snp_id_omp.end());
+//	
+//}
+
 void BAMBOO::ShuffleSNP(drand48_data &buf, vector<int> &sel_snp_id_omp){
 	
-	vector<int> snp_id (nsnp, -1);//index of snp id, initialized to 1:nsnp
-	for(int i = 0; i < nsnp; ++i){
-		snp_id[i] = i;
-	}
+	vector<int> snp_id = inc_snp_id;//index of snp id, initialized to 1:nsnp
 	
-	for(int k = nsnp - 1; k > 0; --k){
+	for(int k = snp_id.size() - 1; k > 0; --k){
 		long int li;
 		lrand48_r(&buf, &li);
 		int j = li % (k + 1);
@@ -1786,6 +1879,10 @@ void BAMBOO::ShuffleSNP(drand48_data &buf, vector<int> &sel_snp_id_omp){
 		sel_snp_id_omp.clear();
 	}
 	
+	if(mtry > inc_snp_id.size()){
+		cout << "Error: debug ShuffleSNP" << endl;
+	}
+	
 	for(int i = 0; i < mtry; ++i){//selecte the top mtry SNPs to split a node
 		sel_snp_id_omp.push_back(snp_id[i]);
 	}
@@ -1793,15 +1890,59 @@ void BAMBOO::ShuffleSNP(drand48_data &buf, vector<int> &sel_snp_id_omp){
 	
 }
 
+//void BAMBOO::ShuffleAllFeature(drand48_data &buf, vector<int> &sel_snp_id_omp, 
+//	vector<int> &sel_cont_id_omp, vector<int> &sel_cate_id_omp){
+//	
+//	vector<int> fid (nvar, 0);//feature id. Index of snp id and other covariates' id
+//	for(int i = 0; i < nvar; ++i){
+//		fid[i] = i;
+//	}
+//	
+//	for(int k = nvar - 1; k > 0; --k){
+//		long int li;
+//		lrand48_r(&buf, &li);
+//		int j = li % (k + 1);
+//		int f = fid[j];
+//		fid[j] = fid[k];
+//		fid[k] = f;
+//	}
+//	
+//	if(!sel_snp_id_omp.empty()){
+//		sel_snp_id_omp.clear();
+//	}
+//	if(!sel_cont_id_omp.empty()){
+//		sel_cont_id_omp.clear();
+//	}
+//	if(!sel_cate_id_omp.empty()){
+//		sel_cate_id_omp.clear();
+//	}
+//	
+//	for(int i = 0; i < mtry; ++i){//select SNPs from the top mtry features to split a node
+//		if(fid[i] < nsnp){
+//			sel_snp_id_omp.push_back(fid[i]);
+//		}else if(fid[i] < nsnp + ncont){
+//			sel_cont_id_omp.push_back(fid[i]-nsnp);//select continuous features
+//		}else{
+//			sel_cate_id_omp.push_back(fid[i]-nsnp-ncont);//select catigorical features
+//		}
+//	}
+//	sort(sel_snp_id_omp.begin(), sel_snp_id_omp.end());
+//	sort(sel_cont_id_omp.begin(), sel_cont_id_omp.end());
+//	sort(sel_cate_id_omp.begin(), sel_cate_id_omp.end());
+//	
+//}
+
 void BAMBOO::ShuffleAllFeature(drand48_data &buf, vector<int> &sel_snp_id_omp, 
 	vector<int> &sel_cont_id_omp, vector<int> &sel_cate_id_omp){
 	
-	vector<int> fid (nvar, 0);//feature id. Index of snp id and other covariates' id
-	for(int i = 0; i < nvar; ++i){
-		fid[i] = i;
+	vector<int> fid = inc_snp_id;//feature id. Index of snp id and other covariates' id
+	for(int i = nsnp; i < nvar; ++i){
+		fid.push_back(i);
 	}
 	
-	for(int k = nvar - 1; k > 0; --k){
+	int nvar0 = fid.size();
+	
+	for(int k = nvar0 - 1; k > 0; --k){
 		long int li;
 		lrand48_r(&buf, &li);
 		int j = li % (k + 1);
