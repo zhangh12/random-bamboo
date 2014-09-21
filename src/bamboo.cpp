@@ -315,7 +315,7 @@ void BAMBOO::EncodeCate(){
 
 void BAMBOO::PrintPara(){
 	
-	cout << "Genotypes of " << nsnp << " markers are loaded in SNP-major mode from [ " << path_bed << " ]" << endl;
+	cout << nsnp << " markers are loaded in SNP-major mode from [ " << path_bed << " ]" << endl;
 	
 	if(has_cont){
 		cout << ncont << " continuous and/or ordinary covariates are loaded from [ " << path_cont << " ]" << endl;
@@ -689,8 +689,9 @@ void BAMBOO::LoadTrainingData(){
 			}
 		}else{
 			nsnp_specified = specified_snpid.size();
-			cout << nsnp_specified << " SNPs in [ " << path_snpid << " are used in training" << endl;
-			inc_snp_id.clear();
+			cout << nsnp_specified << " SNPs in [ " << path_snpid << " ] are used in training" << endl;
+			
+			vector<bool> tmp (nsnp, false);
 			
 			#pragma omp parallel num_threads(nthread)
 			{
@@ -699,10 +700,17 @@ void BAMBOO::LoadTrainingData(){
 					string str = snp_name[i];
 					for(int j = 0; j < nsnp_specified; ++j){
 						if(str == specified_snpid[j]){
-							inc_snp_id.push_back(i);
+							tmp[i] = true;
 							break;
 						}
 					}
+				}
+			}
+			
+			inc_snp_id.clear();
+			for(int i = 0; i < nsnp; ++i){
+				if(tmp[i]){
+					inc_snp_id.push_back(i);
 				}
 			}
 			
@@ -1392,7 +1400,6 @@ void BAMBOO::ParseModelPath(const char *const input_path_bam){
 			cout << "Error: Invalid input of --bam. It should be a BAM file's name (no extension) or a directory" << endl;
 			exit(1);
 		}
-		bam_list.push_back(path_bam);
 	}
 	
 	
@@ -4809,6 +4816,11 @@ void BAMBOO::SavePrediction(){
 void BAMBOO::ScanMultipleForest(){
 	
 	int nforest = bam_list.size();
+	for(int i = 0; i < bam_list.size(); ++i){
+		cout << bam_list[i] << "\t";
+	}
+	cout << endl;
+	
 	if(nforest == 0){
 		cout << "Error: Cannot find trained models for prediction" << endl;
 		exit(1);
