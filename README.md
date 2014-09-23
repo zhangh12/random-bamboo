@@ -87,5 +87,16 @@ bamboo --bam ./model
 * `-v`, `--version`. Print version information. Unimplemented. Default: switched off.
 
 
+#Todo
+
+* [ ] allow specifying must-included variables (e.g., STUDY, AGE, etc.)
+* [ ] optimize memory and speed further
+* [ ] mute output except `bam` file
+* [ ] print data information (e.g., MAF, etc.)
+* [ ] filter genotypes by MAF
+* [ ] test AUC function with tie
+* [ ] allow specifying cutoff in prediction
+* [ ] allow individual weights in sampling
+* [ ] print help information
 
 
