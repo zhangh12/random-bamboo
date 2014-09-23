@@ -117,7 +117,7 @@ int main(int argc, char **argv){
 			{"noimp", 0, NULL, 'n'},
 			{"balance", 0, NULL, 'B'},
 			{"trace", 0, NULL, 'r'},
-			{"nobamboo", 0, NULL, 'N'},
+			{"nobam", 0, NULL, 'N'},
 			{"help", 0, NULL, 'h'},
 			{"version", 0, NULL, 'v'},
 			{0, 0, 0, 0}
