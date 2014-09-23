@@ -73,7 +73,7 @@ bamboo --bam ./path
 * `-s`, `--seed`. Random seed. Positive integer. Default: 1.
 * `-l`, `--maxnleaf`. Maximum leaves in a single tree. Positive integer. Default: 1000000.
 * `-e`, `--minleafsize`. Minimum sample size in a single tree. Positive integer. Default: 1.
-* `-i`, `--imp`. Types of variable importance. 1 - Gini; 2 - Breiman & Cutler's; 3 - Liaw & Wiener's; 4 - Raw; 5 - Meng's; 6 - All. Default: 1.
+* `-i`, `--imp`. Types of variable importance. 1 - Gini; 2 - Permuted (Breiman & Cutler's fortran verion); 3 - Permuted (Liaw & Wiener's `R` package `randomForest`); 4 - Permuted (Raw, unrescaled); 5 - Permuted (Meng's rescaled method); 6 - print Gini and all permuted importance. Default: 1.
 * `-d`, `--nthread`. Number of threads in parallelization. Positive integer. Default: maximum available number of CPUs allowed by the hardware.
 * `-w`, `--classwt`. Class weight assigned to the case group. Positive double. Default: 1.0.
 * `-u`, `--cutoff`. Unimplemented.
