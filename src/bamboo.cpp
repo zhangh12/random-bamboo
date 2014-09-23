@@ -3030,7 +3030,7 @@ void BAMBOO::PrintProgress(const time_t elapsed_time){
 			cout << " ";
 		}
 	}
-	cout << "|  REM ~";
+	cout << "|  ETA ~";
 	
 	if(completed_jobs > 0){
 		time_t rem = (time_t) ceil(elapsed_time * 1.0 / completed_jobs * (ntree - completed_jobs));
