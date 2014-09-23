@@ -4,11 +4,11 @@ Random Bamboo
 
 #Introduction
 
-Random Bamboo (RB) is a ultra-fast C++ implement of the Random Forest (RF) algorithm. The program is designed for analyzing the large-scale genome-wide association study (GWAS) and building predictive model on hundreds of thousands of SNPs for personalized medicine. RB adopts fancy data structure and Boolean operation method to speedup the algorithm dramatically. The single-thread version is 40 times faster than the R package `randomForest`. OpenMP is used to enable parallelization feature. RB is thus appliable to large study with thousands or tens of thousands of individuals. 
+Random Bamboo (RB) is a ultra-fast C++ implement of the [Random Forest](https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm) (RF) algorithm. The program is designed for analyzing the large-scale [genome-wide association study](http://en.wikipedia.org/wiki/Genome-wide_association_study) (GWAS) and building predictive model on hundreds of thousands of SNPs for personalized medicine. RB adopts fancy data structure and Boolean operation method to speedup the algorithm dramatically. The single-thread version is 40 times faster than the R package `randomForest`. [OpenMP](http://openmp.org/wp/) is used to enable parallelization feature. RB is thus appliable to large study with thousands or tens of thousands of individuals. 
 
 #Usage
 
-RB requires input data with format defined by PLINK. To accelerate loading the training data, the binary files should be generated before using RB. PLINK provides the service to do so. Suppose we have large `train.ped` file containing genotypes information and a mapping file `train.map`. The following command generates files `train.bed`, `train.bim` and `train.fam`
+RB requires input data with format defined by [PLINK](http://pngu.mgh.harvard.edu/~purcell/plink/). To accelerate loading the training data, the binary files should be generated before using RB. PLINK provides the service to do so. Suppose we have large `train.ped` file containing genotypes information and a mapping file `train.map`. The following command generates files `train.bed`, `train.bim` and `train.fam`
 ```
 plink --file train --out train --make-bed --noweb
 ```
