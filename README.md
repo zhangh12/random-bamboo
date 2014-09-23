@@ -2,14 +2,60 @@ Random Bamboo
 =============
 
 
-#INTRODUCTION
+#Introduction
 
 Random Bamboo (RB) is a ultra-fast C++ implement of the Random Forest (RF) algorithm. The program is designed for analyzing the large-scale genome-wide association study (GWAS) and building predictive model on hundreds of thousands of SNPs for personalized medicine. RB adopts fancy data structure and Boolean operation method to speedup the algorithm dramatically. The single-thread version is 40 times faster than the R package `randomForest`. OpenMP is used to enable parallelization feature. RB is thus appliable to large study with thousands or tens of thousands of individuals. 
 
-#OPTIONS
+#Usage
+
+RB requires input data with format defined by PLINK. To accelerate loading the training data, the binary files should be generated before using RB. PLINK provides the service to do so. Suppose we have large `train.ped` file containing genotypes information and a mapping file `train.map`. The following command generates files `train.bed`, `train.bim` and `train.fam`
+```
+plink --file train --out train --make-bed --noweb
+```
+
+Similarly we generate the testing data `test.bed`, `test.bim` and `test.fam`
+```
+plink --file test --out test --make-bed --noweb
+```
+
+Run the following command to train a model with SNPs only
+```
+bamboo --file train --mtry 5000 --ntree 10000 --out rb
+```
+
+files `rb.cof`, `rb.err`, `rb.imp` and `rb.bam` will be saved, which contain the confusion matrix, oob error, Gini importance and trained model. 
+
+If continuous and categorical covariates are available in files `train.con` and `train.cat`, run the following command to train a model with covariates
+```
+bamboo --file train --cont train --cate train --out rb --mtry 5000 --ntree 10000
+```
+
+We can predict testing data after training a model
+```
+bamboo --file train --cont train --cate train --out rb --mtry 5000 --ntree 10000 --pred test
+```
+Five files `test.bed`, `test.bim`, `test.fam`, `test.con` and `test.cat` are needed in prediction. Please note that the files' names of training data can be different, but they are required to be the same in testing data. The predicton results are saved in `rb.prd`.
+
+We can use single bam file (`rb.bam`) saved in local to predict
+```
+bamboo --pred test --bam rb --out rb
+```
+If multiple bam files are save in a directory `./model`, we can use all of them to make a prediction
+```
+bamboo --pred test --bam ./model --out rb
+```
+
+RB can print information of given bam file(s)
+```
+bamboo --bam rb
+bamboo --bam ./model
+```
 
 
-* `-f`, `--file`. File names of three plink-formated datasets, including bed, bim and fam. Character. No default.
+#Options
+
+
+* `-f`, `--file`. File names of three PLINK-formated datasets, including bed, bim and fam. Character. No default.
 * `-c`, `--cont`. File name of continuous or ordered covariates, with extension con. The first row is header. The first column contains individual IDs. Character. No default.
 * `-a`, `--cate`. File name of categorical covariates, with extension cat. The first row is header. The first column contains individual IDs. Character. No default.
 * `-o`, `--out`. File name of all output files. Character. If unspecified, it is set as `--file` or `--pred`.
