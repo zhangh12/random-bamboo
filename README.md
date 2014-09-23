@@ -47,10 +47,10 @@ bamboo --pred test --bam ./path --out rb
 ```
 `RB` will parse the meaning of `--bam` automatically.
 
-`RB` can print information of given bam file(s)
+To print summary information of given bam file(s)
 ```
 bamboo --bam rb
-bamboo --bam ./model
+bamboo --bam ./path
 ```
 
 `RB` parses the input files according to their extensions. Only the file name without extension is needed when invoking `RB`.
