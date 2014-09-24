@@ -1192,8 +1192,6 @@ void BAMBOO::PrintModelInfo(){
 		ncate = nca[0];
 		flip = fl[0];
 		
-		cout << nsnp << "\t" << ncont << "\t" << ncate << "\t" << flip << endl;
-		
 		ComputeWordBits();//don't forget this otherwise the PopCount function fails
 		
 		LEN = 64;
@@ -1246,7 +1244,6 @@ void BAMBOO::PrintModelInfo(){
 			for(int i = 0; i < nforest; ++i){
 				
 				int tid = omp_get_thread_num();
-				cout << tid << " -> " << i << endl;
 				ifstream ifs(bam_list[i]);
 				if(!ifs){
 					cout << "Error: Cannot open BAM file " << bam_list[i] << endl;
@@ -4816,10 +4813,6 @@ void BAMBOO::SavePrediction(){
 void BAMBOO::ScanMultipleForest(){
 	
 	int nforest = bam_list.size();
-	for(int i = 0; i < bam_list.size(); ++i){
-		cout << bam_list[i] << "\t";
-	}
-	cout << endl;
 	
 	if(nforest == 0){
 		cout << "Error: Cannot find trained models for prediction" << endl;
