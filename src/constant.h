@@ -2,7 +2,7 @@
 #ifndef CONSTANT_H
 #define CONSTANT_H
 
-#define RANDOM_BAMBOO_VERSION "0.3.3"
+#define RANDOM_BAMBOO_VERSION "0.4.0"
 #define CODE_NULL 0
 #define CODE_SNP 1
 #define CODE_CONT 2

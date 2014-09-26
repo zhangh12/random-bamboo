@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.3.3    |   September 19, 2014    //
+//    RANDOM BAMBOO    |     v0.4.0    |   September 25, 2014    //
 //---------------------------------------------------------------//
 //              (C) 2014 Han Zhang, Yifan Yang                   //
 //              GNU General Public License  V3                   //
@@ -8,33 +8,10 @@
 //           http://www.hanzhang.name/softwares/rb               //
 //---------------------------------------------------------------//
 //                                                               //
-//   Update: 0.3.x                                               //
+//   Update: 0.4.x                                               //
 //                                                               //
-//     September 12, 2014                                        //
-//     (1) Re-wirte the whole program to allow large ntree, nsub //
-//         and nvar, e.g., reduce memory consumption             //
-//     (2) Parallelize the program in stages of loading and      //
-//         predicting data                                       //
-//     (3) Save --flip in local model, otherwise the prediction  //
-//         is wrong                                              //
-//                                                               //
-//     September 14, 2014                                        //
-//     (1) Add option --trainid, the individual IDs that are     //
-//         included in training stage. This option is useful in  //
-//         cross validation                                      //
-//     (2) Add option --testid, the individual IDs that included //
-//         in testing stage.                                     //
-//                                                               //
-//     September 15, 2014                                        //
-//     (1) Scan information of BAM files specified in a          //
-//         directory or a single file specified by its name      //
-//                                                               //
-//     September 17, 2014                                        //
-//     (1) Load all BAM files in specified folder in prediction  //
-//                                                               //
-//     September 19, 2014                                        //
-//     (1) Add option --snpid, the SNPs that are included in     //
-//         training stage.                                       //
+//     September 25, 2014                                        //
+//     (1) explore correlative markers                           //
 //                                                               //
 ///////////////////////////////////////////////////////////////////
 
@@ -48,7 +25,7 @@ int main(int argc, char **argv){
 	
 	cout << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
-	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      09/19/2014     |" << endl;
+	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      09/25/2014     |" << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
 	cout << "|                   (C) 2014 Han Zhang, Yifan Yang                 |" << endl;
 	cout << "|                   GNU General Public License, V3                 |" << endl;
@@ -79,6 +56,9 @@ int main(int argc, char **argv){
 	double class_weight = -1.0;//w
 	double cutoff = 1.0;//u
 	
+	int neighbor = 0;//j
+	int search_back = 0;//k
+	
 	bool flip = true;//g
 	bool output_prox = false;//x
 	bool output_imp = true;//n
@@ -90,6 +70,7 @@ int main(int argc, char **argv){
 	bool out_spec = false;
 	bool pred_spec = false;
 	bool bam_spec = false;
+	bool ntree_spec = false;
 	
 	int c;
 	while(true){
@@ -112,6 +93,8 @@ int main(int argc, char **argv){
 			{"nthread", 1, NULL, 'd'},
 			{"classwt", 1, NULL, 'w'},
 			{"cutoff", 1, NULL, 'u'},
+			{"neighbor", 1, NULL, 'j'},
+			{"searchback", 1, NULL, 'k'},
 			{"noflip", 0, NULL, 'g'},
 			{"prox", 0, NULL, 'x'},
 			{"noimp", 0, NULL, 'n'},
@@ -123,10 +106,10 @@ int main(int argc, char **argv){
 			{0, 0, 0, 0}
 		};
 		
-		//jkq
+		//q
 		
 		int option_index = 0;
-		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:S:t:m:s:l:e:i:d:w:u:gxnBrNI", long_options, &option_index);
+		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:S:t:m:s:l:e:i:d:w:u:j:k:gxnBrNI", long_options, &option_index);
 		
 		if(c == -1){
 			break;
@@ -166,6 +149,7 @@ int main(int argc, char **argv){
 				break;
 			case 't':
 				ntree = atoi(optarg);
+				ntree_spec = true;
 				break;
 			case 'm':
 				mtry = atoi(optarg);
@@ -224,6 +208,20 @@ int main(int argc, char **argv){
 				cutoff = atof(optarg);
 				if(cutoff <= .0){
 					cout << "Error: The option --cutoff must be a positive number" << endl;
+					return 0;
+				}
+				break;
+			case 'j':
+				neighbor = atoi(optarg);
+				if(neighbor < 0){
+					cout << "Error: The option --neighbor must be a non-negative integer" << endl;
+					return 0;
+				}
+				break;
+			case 'k':
+				search_back = atoi(optarg);
+				if(search_back < 0){
+					cout << "Error: The option --searchback must be a non-negative integer" << endl;
 					return 0;
 				}
 				break;
@@ -298,12 +296,15 @@ int main(int argc, char **argv){
 	
 	
 	if(!file_spec && pred_spec){//predicting testing data (--pred) using models specified in --bam
-		BAMBOO bb (out, pred, bam, testid, nthread);
+		if(!ntree_spec){
+			ntree = -1;
+		}
+		BAMBOO bb (out, pred, bam, testid, nthread, ntree);
 		bb.PredictTestingSample();
 		return 0;
 	}else{//training model, and then predicting testing data if --pred is on
 		BAMBOO bb (file, out, cont, cate, pred, trainid, testid, snpid, ntree, mtry, max_nleaf, min_leaf_size, 
-		imp_measure, seed, nthread, class_weight, cutoff, flip, output_prox, output_imp, output_bamboo, 
+		imp_measure, seed, nthread, class_weight, cutoff, neighbor, search_back, flip, output_prox, output_imp, output_bamboo, 
 		balance, trace);
 		bb.GrowForest();
 		bb.PredictTestingSample();
