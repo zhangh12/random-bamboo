@@ -77,7 +77,7 @@ bamboo --bam ./path
 * `-d`, `--nthread`. Number of threads in parallelization. Positive integer. Default: maximum available number of CPUs allowed by the hardware.
 * `-w`, `--classwt`. Class weight assigned to the case group. Positive double. Default: 1.0.
 * `-u`, `--cutoff`. Unimplemented.
-* `-g`, `--noflip`. Keep the genotypes of SNPs with MAF > 0.5 unchanged. Default: switched off.
+* `-g`, `--flip`. Flip the genotypes of SNPs with MAF > 0.5. Default: switched off.
 * `-x`, `--prox`. Save the proximity matrix to local file. Default: switched off.
 * `-n`, `--noimp`. Don't save variable importances to local file. Default: switched off.
 * `-B`, `--balance`. Balance the ratio of cases and controls in training data to 1. Default: switched off.
