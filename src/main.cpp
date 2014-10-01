@@ -59,7 +59,7 @@ int main(int argc, char **argv){
 	int neighbor = 0;//j
 	int search_back = 0;//k
 	
-	bool flip = true;//g
+	bool flip = false;//g
 	bool output_prox = false;//x
 	bool output_imp = true;//n
 	bool balance = false;//B //if it is turned on and class_weight is not set (< .0), then class_weight by balancing the data (according to case/control ratio in data)
@@ -95,7 +95,7 @@ int main(int argc, char **argv){
 			{"cutoff", 1, NULL, 'u'},
 			{"neighbor", 1, NULL, 'j'},
 			{"searchback", 1, NULL, 'k'},
-			{"noflip", 0, NULL, 'g'},
+			{"flip", 0, NULL, 'g'},
 			{"prox", 0, NULL, 'x'},
 			{"noimp", 0, NULL, 'n'},
 			{"balance", 0, NULL, 'B'},
@@ -226,7 +226,8 @@ int main(int argc, char **argv){
 				}
 				break;
 			case 'g':
-				flip = false;
+				flip = true;
+				break;
 			case 'x':
 				output_prox = true;
 				break;

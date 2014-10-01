@@ -4220,8 +4220,11 @@ void BAMBOO::LoadTestingData(){
 						}
 						if(!valid_str){
 							no_invalid_str_this_row = false;
-							break;
 						}
+					}
+					
+					if(!no_invalid_str_this_row){
+						break;
 					}
 				}
 				if(no_missing_this_row && no_invalid_str_this_row){
@@ -4539,10 +4542,9 @@ void BAMBOO::LoadTestingData(){
 			index_inc[index_individual_id_cont_inc[i]] = true;
 		}
 		
-		xcont_test = vector<vector<double> > (ncont, vector<double> (nsub_test, .0));
+		vector<vector<double> > xcont_all_test (ncont, vector<double> (nsub_cont, -999999.0));
 		
 		int nrow = -2;
-		int k = -1;
 		for(string s; getline(f_cont, s); ){
 			istringstream sin(s);
 			string iid;
@@ -4551,7 +4553,6 @@ void BAMBOO::LoadTestingData(){
 				continue;
 			}else if(nrow >= 0){
 				if(index_inc[nrow]){//use this row
-					++k;
 					sin >> iid;
 					double d;
 					int j = -1;
@@ -4560,7 +4561,7 @@ void BAMBOO::LoadTestingData(){
 						if(cont_col[j] == -1){
 							continue;
 						}else if(cont_col[j] >= 0 && cont_col[j] < ncont){
-							xcont_test[cont_col[j]][k] = d;
+							xcont_all_test[cont_col[j]][nrow] = d;
 						}else{
 							cout << "Error: in loading " << path_cont_test << endl;
 							f_cont.close();
@@ -4575,6 +4576,13 @@ void BAMBOO::LoadTestingData(){
 			}
 		}
 		f_cont.close();
+		
+		xcont_test = vector<vector<double> > (ncont, vector<double> (nsub_test, .0));
+		for(int j = 0; j < ncont; ++j){
+			for(int i = 0; i < nsub_test; ++i){
+				xcont_test[j][i] = xcont_all_test[j][index_individual_id_cont_inc[i]];
+			}
+		}
 		
 		cout << ncont << " continuous covariate(s) are loaded from [ " << path_cont_test << " ] for prediction" << endl;
 	}
@@ -4592,11 +4600,10 @@ void BAMBOO::LoadTestingData(){
 			index_inc[index_individual_id_cate_inc[i]] = true;
 		}
 		
-		xcate_test = vector<vector<string> > (ncate, vector<string> (nsub_test));
-		xcate_int_test = vector<vector<int> > (ncate, vector<int> (nsub_test));
+		vector<vector<string> > xcate_all_test (ncate, vector<string> (nsub_cate));
+		vector<vector<int> > xcate_int_all_test (ncate, vector<int> (nsub_cate));
 		
 		int nrow = -2;
-		int k = -1;
 		for(string s; getline(f_cate, s); ){
 			istringstream sin(s);
 			string iid;
@@ -4605,21 +4612,20 @@ void BAMBOO::LoadTestingData(){
 				continue;
 			}else if(nrow >= 0){
 				if(index_inc[nrow]){//use this row
-					++k;
 					sin >> iid;
 					string str;
 					int j = -1;
 					while(sin >> str){
 						++j;
 						int ccj = cate_col[j];
-						if(ccj == -1){//this variable is not used in trained bamboo or not in the training data
+						if(ccj == -1){////this variable is not used in trained bamboo or not in the training data
 							continue;
 						}else if(ccj >= 0 && ccj < ncate){//this variable is useful in prediction
-							xcate_test[ccj][k] = str;
+							xcate_all_test[ccj][nrow] = str;
 							
 							for(int ii = 0; ii < cate_unique[ccj].size(); ++ii){
 								if(str == cate_unique[ccj][ii]){
-									xcate_int_test[ccj][k] = cate_code[ccj][ii];
+									xcate_int_all_test[ccj][nrow] = cate_code[ccj][ii];
 									break;
 								}
 							}
@@ -4629,16 +4635,23 @@ void BAMBOO::LoadTestingData(){
 							exit(1);
 						}
 					}
-				}else{
-					continue;
 				}
-			}else{//impossible
-				cout << "Error: what?" << endl;
+			}
+		}
+		
+		xcate_test = vector<vector<string> > (ncate, vector<string> (nsub_test));
+		xcate_int_test = vector<vector<int> > (ncate, vector<int> (nsub_test));
+		
+		for(int j = 0; j < ncate; ++j){
+			for(int i = 0; i < nsub_test; ++i){
+				xcate_test[j][i] = xcate_all_test[j][index_individual_id_cate_inc[i]];
+				xcate_int_test[j][i] = xcate_int_all_test[j][index_individual_id_cate_inc[i]];
 			}
 		}
 		f_cate.close();
 		
 		cout << ncate << " categorical covariate(s) are loaded from [ " << path_cate_test << " ] for prediction" << endl;
+		
 	}
 	
 	time_t current_time;
