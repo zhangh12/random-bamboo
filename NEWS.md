@@ -1,4 +1,4 @@
-# CHANGES IN Random Bamboo VERSION 0.4.0
+# CHANGES IN Random Bamboo VERSION 0.4.x
 
 ## MAJOR CHANGES
 
