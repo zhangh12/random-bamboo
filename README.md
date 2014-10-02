@@ -33,9 +33,9 @@ bamboo --file train --cont train --cate train --out rb [...]
 `[...]` can include any other available options to customize the training stage. The first line of the covariate files is the header and the first column is the individual IDs used for aligning the genotypes information given in genotype files. Below is an example of covariate files
 
 ```{r}
-> fam <- read.table("train.fam", header=F,as.is=T)
-> cat <- read.table("train.cat", header=T,as.is=T)
-> con <- read.table("train.con", header=T,as.is=T)
+> fam <- read.table("train.fam", header = FALSE, as.is = TRUE)
+> cat <- read.table("train.cat", header = TRUE, as.is = TRUE)
+> con <- read.table("train.con", header = TRUE, as.is = TRUE)
 > head(fam, 3)
             V1           V2 V3 V4 V5 V6
 1 CG-L03-81390 CG-L03-82390  0  0  2  2
