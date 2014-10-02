@@ -8,7 +8,7 @@ Random Bamboo
 
 #Usage
 
-`RB` requires input data with format defined by [`PLINK`](http://pngu.mgh.harvard.edu/~purcell/plink/). To accelerate loading the training data, the binary files should be generated via `PLINK` before applying `RB`. Suppose we have large `train.ped` file containing genotypes information and a mapping file `train.map`, both are described [here](http://pngu.mgh.harvard.edu/~purcell/plink/data.shtml). The following command generates three *genotype* files `train.bed`, `train.bim` and `train.fam`
+`RB` requires input data with format defined by [`PLINK`](http://pngu.mgh.harvard.edu/~purcell/plink/). To accelerate loading the genotype data, the binary files should be generated via `PLINK` before applying `RB`. Suppose we have large `train.ped` file containing genotypes information and a mapping file `train.map`, both are described [here](http://pngu.mgh.harvard.edu/~purcell/plink/data.shtml). The following command generates three *genotype* files `train.bed`, `train.bim` and `train.fam`
 ```
 plink --file train --out train --make-bed --noweb
 ```
