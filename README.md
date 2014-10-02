@@ -16,7 +16,12 @@ Similarly we generate the testing data `test.bed`, `test.bim` and `test.fam` fro
 ```
 plink --file test --out test --make-bed --noweb
 ```
+
 **NOTE** The three genotype files MUST share the same name.
+
+**NOTE** The sixth column in `fam` file is the phenotype, with 1 as control and 2 as case.
+
+**NOTE** Although six columns are in `fam` file, `RB` only uses the second (INDIVIDUAL ID) and sixth (PHENOTYPE) columns. The SEX in the fifth column is ignored. If SEX is required to be used in training, place it in covariate file `cat` (character) or covariate file `con` (dummy variable).
 
 **NOTE** `RB` parses the input files according to their extensions. Only the file name without extension is needed when invoking `RB`.
 
@@ -30,7 +35,7 @@ If continuous and categorical covariates are available in *covariate* files `tra
 ```
 bamboo --file train --cont train --cate train --out rb [...]
 ```
-`[...]` can include any other available options to customize the training stage. The first line of the covariate files is the header and the first column is the individual IDs used for aligning the genotypes information given in genotype files. Below is an example of covariate files
+`[...]` can be any other available options to customize the training stage. The first line of the covariate files is the header and the first column is the individual IDs used for aligning the genotypes information given in genotype files. Below is an example of covariate files
 
 ```{r}
 > fam <- read.table("train.fam", header = FALSE, as.is = TRUE)
@@ -55,7 +60,7 @@ bamboo --file train --cont train --cate train --out rb [...]
 
 **NOTE** We can create dummy variables for categorical covariates and treat them as ordinal covariates. In that case, only `con` file is needed.
 
-**NOTE** If the individual contained in the three files are not the same, `Random Bamboo` will find the intersection and train the the model on it.
+**NOTE** If the individual contained in the three files are not the same, `RB` will find the intersection and train the the model on it.
 
 We can predict testing data after training a model
 ```
@@ -69,7 +74,7 @@ If multiple `bam` files are save in a directory `./path`, we can use all of them
 ```
 bamboo --pred test --bam ./path --out rb
 ```
-`RB` will parse the meaning of `--bam` automatically. The feature is useful as we can run `Random Bamboo` on multiple unparallelizable nodes, each with option `--nthread` enabled, and then all outputed `bam` files are used together in prediction.
+`RB` will parse the meaning of `--bam` automatically. The feature is useful as we can run `RB` on multiple unparallelizable nodes, each with option `--nthread` enabled, and then all outputed `bam` files are used together in prediction.
 
 **NOTE** The prediction results are saved in `prd` file.
 
