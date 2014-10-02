@@ -146,6 +146,7 @@ bamboo --bam ./path
 
 #Todo
 
+* [ ] allow stratified sampling (e.g., STUDY)
 * [ ] allow specifying must-included variables (e.g., STUDY, AGE, etc.)
 * [ ] optimize memory and speed further
 * [ ] mute output except `bam` file
