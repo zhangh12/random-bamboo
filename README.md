@@ -18,17 +18,19 @@ plink --file test --out test --make-bed --noweb
 ```
 **NOTE** The three genotype files MUST share the same name.
 
+**NOTE** `RB` parses the input files according to their extensions. Only the file name without extension is needed when invoking `RB`.
+
 Run the following command to train a model with SNPs only
 ```
 bamboo --file train --mtry 5000 --ntree 10000 --out rb
 ```
-Four files `rb.cof`, `rb.err`, `rb.imp` and `rb.bam` will be saved to local, which contain the confusion matrix, oob error, Gini importance and trained model, respectively.
+Four files `rb.cof`, `rb.err`, `rb.imp` and `rb.bam` will be saved to local, which contain the confusion matrix, oob error, Gini importance and trained model, respectively. The `bam` file is generally large, which can be muted by switching on the option `--nobamboo` if the trained model will not be used in future prediction.
 
-If continuous and categorical covariates are available in files `train.con` and `train.cat`, run the following command to train a model with covariates
+If continuous and categorical covariates are available in *covariate* files `train.con` and `train.cat`, run the following command to train a model with covariates
 ```
 bamboo --file train --cont train --cate train --out rb --mtry 5000 --ntree 10000
 ```
-Please note that the first line of `train.con` and `train.cat` is the header and the first column is the individual IDs used for aligning the genotypes information given in `fam` file. Below is an example of `con` and `cat` files
+The first line of `con` and `cat` files is the header and the first column is the individual IDs used for aligning the genotypes information given in `fam` file. Below is an example of covariate files
 
 ```{r}
 > fam <- read.table("train.fam", header=F,as.is=T)
@@ -36,71 +38,79 @@ Please note that the first line of `train.con` and `train.cat` is the header and
 > con <- read.table("train.con", header=T,as.is=T)
 > head(fam, 3)
             V1           V2 V3 V4 V5 V6
-1 CG-L03-82390 CG-L03-82390  0  0  2  2
-2 CG-L03-22262 CG-L03-22262  0  0  2  2
-3 CG-L03-69734 CG-L03-69734  0  0  2  2
+1 CG-L03-81390 CG-L03-82390  0  0  2  2
+2 CG-L03-24262 CG-L03-22262  0  0  2  2
+3 CG-L03-69034 CG-L03-69734  0  0  2  2
 > head(cat, 3)
        GWAS_ID AGE_CAT GENDER STUDY CIGDAY_CAT CIG_CAT          QUIT_CAT
-1 CG-L02-83335  61to65   MALE  PLCO     21to30 CURRENT CURRENT_NEVER_lt1
-2 CG-L02-90330  61to65   MALE  PLCO     21to30 CURRENT CURRENT_NEVER_lt1
-3 CG-L02-66314  66to70   MALE  PLCO     11to20 CURRENT CURRENT_NEVER_lt1
+1 CG-L02-83435  61to65   MALE  PLCO     21to30 CURRENT CURRENT_NEVER_lt1
+2 CG-L02-90230  61to65   MALE  PLCO     21to30 CURRENT CURRENT_NEVER_lt1
+3 CG-L02-67314  66to70   MALE  PLCO     11to20 CURRENT CURRENT_NEVER_lt1
 > head(con, 3)
        GWAS_ID EAGLE_EV2     PLCO_EV4     PLCO_EV5 ATBC_EV2
-1 CG-L02-83335         0 -0.005957644  0.010665938        0
-2 CG-L02-90330         0 -0.017674167 -0.006934786        0
-3 CG-L02-66314         0  0.003294853 -0.010221391        0
+1 CG-L02-83435         0 -0.005957644  0.010665938        0
+2 CG-L02-90230         0 -0.017674167 -0.006934786        0
+3 CG-L02-67314         0  0.003294853 -0.010221391        0
 ```
+
+**NOTE** We can create dummy variables for categorical covariates and treat them as ordinary covariates. In that case, only `con` file is needed.
+
+**NOTE** If the individual contained in the three files are not the same, `Random Bamboo` will find the intersection and train the the model on it.
 
 We can predict testing data after training a model
 ```
 bamboo --file train --cont train --cate train --out rb --mtry 5000 --ntree 10000 --pred test
 ```
-
 We can also use single bam file (`rb.bam`) saved in local to predict
 ```
 bamboo --pred test --bam rb --out rb
 ```
-If multiple bam files are save in a directory `./path`, we can use all of them to make a prediction
+If multiple `bam` files are save in a directory `./path`, we can use all of them to make a prediction
 ```
 bamboo --pred test --bam ./path --out rb
 ```
-`RB` will parse the meaning of `--bam` automatically.
+`RB` will parse the meaning of `--bam` automatically. The feature is useful as we can run `Random Bamboo` on multiple unparallelizable nodes, each with option `--nthread` enabled, and then all outputed `bam` files are used together in prediction.
 
-Three files `bed`, `bim`, `fam` are always needed in prediction. If the model is trained with covariates, then `con` and `cat` files are needed as well. The predicton results are saved in `prd` file.
+**NOTE** The prediction results are saved in `prd` file.
 
-**Note** The names of files containing covariates can be different from each other in training stage. They can even be different from the names of genotype files (i.g., `bed` etc.). For example, the following command works fine
+**NOTE** Genotype files are always needed in prediction. If the model is trained with covariates, then `con` and `cat` files are needed as well.
+
+**NOTE** The names of covariate files can be different from each other in training stage. They can even be different from the names of genotype files. For example, the following command works fine
 ```
-bamboo --file geno_train --cont continuous --cate categorical --mtry 5000 --ntree 10000 --out rb
+bamboo --file geno_train --cont cont_covar --cate cate_covar --mtry 5000 --ntree 10000 --out rb
 ```
-However, when we are using the outputed `rb.bam` to predict new data, the files containing covariates and genotypes MUST share the same name. In the example above, all the data files share the name `test`
+However, when we are using the outputed `rb.bam` to predict new data, the covariate files and genotype files MUST share the same name. In the example below, all the data files share the name `test` as only the option `--pred` can be used to specify the data in predicting stage
 ```
 bamboo --bam rb --pred test --out rb
 ```
 
-
-Sometimes we prefer to use a subset data in training or testing. For example, the whole genotype data are imputed and saved in a single `bed` file; or all covariates are put in the same `con` and `cat` files. We can use option `--trainid` to specify which individuals are going to be used in training, and use option `--testid` to specify those used in testing. For example, we have data files `data.fam`, `data.bim`, `data.bed`, `data.con`, `data.cat` and two files `train_id_1.iid` and `test_id_1.iid`. Both of the `iid` files have one column of individual IDs. They look like
+Sometimes we prefer to use a subset of data in training or predicting. For example, all available genotype data are imputed and saved in the same genotype files; or all covariates are put in the same covariate files. We can use option `--trainid` to specify which individuals are going to be used in training, and use option `--testid` to specify those used in predicting. For example, we have data files `all_data.fam`, `all_data.bim`, `all_data.bed`, `all_data.con`, `all_data.cat` and two files `train_id_1.iid` and `test_id_1.iid`. Both of the `iid` files contain one column of individual IDs. They look like
 ```
-CG-L02-60515
-CG-L02-02471
-CG-L02-65310
+CG-L02-61545
+CG-L02-03491
+CG-L02-67300
 ... ...
 ```
 The following command builds model with individuals listed in `train_id_1.iid` only
 ```
-bamboo --file data --cont data --cate data --trainid train_id_1 --mtry 5000 --ntree 10000 --out rb
+bamboo --file all_data --cont all_data --cate all_data --trainid train_id_1 --mtry 5000 --ntree 10000 --out rb
 ```
-With the model fitted by the command above, we can predict the data specified in `test_id_1.iid`
+With the model (`rb.bam`) fitted by the command above, we can predict the data specified in `test_id_1.iid`
 ```
-bamboo --bam rb --pred data --testid test_id_1
+bamboo --bam rb --pred all_data --testid test_id_1
 ```
+Or we can do the above in one line
+```
+bamboo --file all_data --cont all_data --cate all_data --trainid train_id_1 --pred all_data --testid test_id_1 --mtry 5000 --ntree 10000 --out rb
+```
+
+**NOTE** The file specified by the options `--trainid` and `--testid` must have extention `iid`.
 
 To print summary information of given bam file(s)
 ```
 bamboo --bam rb
 bamboo --bam ./path
 ```
-
-`RB` parses the input files according to their extensions. Only the file name without extension is needed when invoking `RB`.
 
 
 #Options
