@@ -8,7 +8,7 @@ Random Bamboo
 
 #Usage
 
-`RB` requires input data with format defined by [`PLINK`](http://pngu.mgh.harvard.edu/~purcell/plink/). To accelerate loading the genotype data, the binary files should be generated via `PLINK` before applying `RB`. Suppose we have large `train.ped` file containing genotypes information and a mapping file `train.map`, both are described [here](http://pngu.mgh.harvard.edu/~purcell/plink/data.shtml). The following command generates three *genotype* files `train.bed`, `train.bim` and `train.fam`
+`RB` requires input data with format defined by [`PLINK`](http://pngu.mgh.harvard.edu/~purcell/plink/). To accelerate loading the genotype data, binary files should be generated via `PLINK` before applying `RB`. Suppose we have large `train.ped` file containing genotypes information and a mapping file `train.map`, both are described [here](http://pngu.mgh.harvard.edu/~purcell/plink/data.shtml). The following command generates three *genotype* files `train.bed`, `train.bim` and `train.fam`
 ```
 plink --file train --out train --make-bed --noweb
 ```
@@ -22,15 +22,15 @@ plink --file test --out test --make-bed --noweb
 
 Run the following command to train a model with SNPs only
 ```
-bamboo --file train --mtry 5000 --ntree 10000 --out rb
+bamboo --file train --out rb --mtry 5000 --ntree 10000
 ```
-Four files `rb.cof`, `rb.err`, `rb.imp` and `rb.bam` will be saved to local, which contain the confusion matrix, oob error, Gini importance and trained model, respectively. The `bam` file is generally large, which can be muted by switching on the option `--nobamboo` if the trained model will not be used in future prediction.
+Four files `rb.cof`, `rb.err`, `rb.imp` and `rb.bam` will be saved to local, which contain the confusion matrix, oob error, Gini importance and trained model, respectively. The `bam` file is generally large, which can be muted by switching on the option `--nobam` if the trained model will not be used in future prediction.
 
 If continuous and categorical covariates are available in *covariate* files `train.con` and `train.cat`, run the following command to train a model with covariates
 ```
-bamboo --file train --cont train --cate train --out rb --mtry 5000 --ntree 10000
+bamboo --file train --cont train --cate train --out rb [...]
 ```
-The first line of `con` and `cat` files is the header and the first column is the individual IDs used for aligning the genotypes information given in `fam` file. Below is an example of covariate files
+`[...]` can include any other available options to customize the training stage. The first line of the covariate files is the header and the first column is the individual IDs used for aligning the genotypes information given in genotype files. Below is an example of covariate files
 
 ```{r}
 > fam <- read.table("train.fam", header=F,as.is=T)
@@ -53,13 +53,13 @@ The first line of `con` and `cat` files is the header and the first column is th
 3 CG-L02-67314         0  0.003294853 -0.010221391        0
 ```
 
-**NOTE** We can create dummy variables for categorical covariates and treat them as ordinary covariates. In that case, only `con` file is needed.
+**NOTE** We can create dummy variables for categorical covariates and treat them as ordinal covariates. In that case, only `con` file is needed.
 
 **NOTE** If the individual contained in the three files are not the same, `Random Bamboo` will find the intersection and train the the model on it.
 
 We can predict testing data after training a model
 ```
-bamboo --file train --cont train --cate train --out rb --mtry 5000 --ntree 10000 --pred test
+bamboo --file train --cont train --cate train --out rb --pred test [...]
 ```
 We can also use single bam file (`rb.bam`) saved in local to predict
 ```
@@ -77,7 +77,7 @@ bamboo --pred test --bam ./path --out rb
 
 **NOTE** The names of covariate files can be different from each other in training stage. They can even be different from the names of genotype files. For example, the following command works fine
 ```
-bamboo --file geno_train --cont cont_covar --cate cate_covar --mtry 5000 --ntree 10000 --out rb
+bamboo --file geno_train --cont cont_covar --cate cate_covar --out rb [...]
 ```
 However, when we are using the outputed `rb.bam` to predict new data, the covariate files and genotype files MUST share the same name. In the example below, all the data files share the name `test` as only the option `--pred` can be used to specify the data in predicting stage
 ```
@@ -93,7 +93,7 @@ CG-L02-67300
 ```
 The following command builds model with individuals listed in `train_id_1.iid` only
 ```
-bamboo --file all_data --cont all_data --cate all_data --trainid train_id_1 --mtry 5000 --ntree 10000 --out rb
+bamboo --file all_data --cont all_data --cate all_data --trainid train_id_1 --out rb [...]
 ```
 With the model (`rb.bam`) fitted by the command above, we can predict the data specified in `test_id_1.iid`
 ```
@@ -101,10 +101,26 @@ bamboo --bam rb --pred all_data --testid test_id_1
 ```
 Or we can do the above in one line
 ```
-bamboo --file all_data --cont all_data --cate all_data --trainid train_id_1 --pred all_data --testid test_id_1 --mtry 5000 --ntree 10000 --out rb
+bamboo --file all_data --cont all_data --cate all_data --trainid train_id_1 --pred all_data --testid test_id_1 --out rb [...]
 ```
 
 **NOTE** The file specified by the options `--trainid` and `--testid` must have extention `iid`.
+
+As suggested by Leo Breiman in [here](https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#varimp)
+
+> ... If the number of variables is very large, forests can be run once with all the variables, then run again using only the most important variables from the first run ... 
+
+We can train a forest using specified markers only by using the option `--snpid`. A file with extension `sid` is needed, in which all SNPs to be used in training a model are listed in one column.
+```
+bamboo --file train --snpid snp [...]
+```
+The `snp.sid` looks like
+```
+rs20112
+rs320078
+rs213980
+...
+```
 
 To print summary information of given bam file(s)
 ```
@@ -116,15 +132,15 @@ bamboo --bam ./path
 #Options
 
 
-* `-f`, `--file`. File names of three PLINK-formated datasets, including `bed`, `bim` and `fam`. Character. No default.
-* `-c`, `--cont`. File name of continuous or ordered covariates, with extension `con`. The first row is header. The first column contains individual IDs. Character. No default.
+* `-f`, `--file`. File names of three PLINK-formated genotype files, with extensions `bed`, `bim` and `fam`. Character. No default.
+* `-c`, `--cont`. File name of continuous or ordinal covariates, with extension `con`. The first row is header. The first column contains individual IDs. Character. No default.
 * `-a`, `--cate`. File name of categorical covariates, with extension `cat`. The first row is header. The first column contains individual IDs. Character. No default.
-* `-o`, `--out`. File name of all output files. Character. If unspecified, it is set as `--file` or `--pred`.
-* `-p`, `--pred`. File names of datasets used in prediction, including `bed`, `bim`, `fam`, `con` and `cat`. The last two are optional if no covariates are used in training model. Character. No default.
-* `-b`, `--bam`. Used to specify trained model. It can be the name of a single `bam` file or a directory contains multiple `bam` files. Character. No default.
-* `-y`, `--trainid`. File name of individual IDs used in training model. The file contains one column and no header. With extension `iid`. If unspecified, all individuals in the datasets are used.
-* `-z`, `--testid`. File name of individual IDs used in prediction. If `--file` is specified, the individuals are predicted with model trained from the specified datasets. If `--bam` is specified, the individuals are predicted with specified model(s). The file contains one column and no header. With extension `iid`. Character. If unspecified, all individuals in the datasets are used.
-* `-S`, `--snpid`. File name of SNPs' names used in training model. The file contains one column and no header. With extension `sid`. Character. No default.
+* `-o`, `--out`. File name of all output files. Character. If unspecified, it is set by `--file` or `--pred`.
+* `-p`, `--pred`. File names of datasets used in prediction, including `bed`, `bim`, `fam`, `con` and `cat`. The last two are optional and is activated if covariates are used in training model. Character. No default.
+* `-b`, `--bam`. Used to specify model(s) used in prediction. It can be the name of a single `bam` file or a directory contains multiple `bam` files. Character. No default.
+* `-y`, `--trainid`. File name of individual IDs used in training model. The file, with extension `iid`, contains one column and no header. Character. If unspecified, all individuals in the datasets are used.
+* `-z`, `--testid`. File name of individual IDs used in prediction. If `--file` is specified, the individuals are predicted with model trained from the specified datasets. If `--bam` is specified, the individuals are predicted with specified model(s). The file, with extension `iid`, contains one column and no header. Character. If unspecified, all individuals in the datasets are used.
+* `-S`, `--snpid`. File name of SNPs' names used in training model. The file, with extension `sid`, contains one column and no header. Character. If unspecified, all SNPs in the training dataset are used.
 * `-t`, `--ntree`. Number of trees in the forest. Positive integer. Default: 1.
 * `-m`, `--mtry`. Number of candidate variables in determining best split in each node. Positive integer. Default: sqrt of total number of variables.
 * `-s`, `--seed`. Random seed. Positive integer. Default: 1.
@@ -134,8 +150,8 @@ bamboo --bam ./path
 * `-d`, `--nthread`. Number of threads in parallelization. Positive integer. Default: maximum available number of CPUs allowed by the hardware.
 * `-w`, `--classwt`. Class weight assigned to the case group. Positive double. Default: 1.0.
 * `-u`, `--cutoff`. Unimplemented.
-* `-g`, `--flip`. Flip the genotypes of SNPs with MAF > 0.5. Default: switched off.
-* `-x`, `--prox`. Save the proximity matrix to local file. Default: switched off.
+* `-g`, `--flip`. Flip the genotypes of SNPs with MAF > 0.5. Default: switched off. Switching on this option is tricky and thus should be used with caution. 
+* `-x`, `--prox`. Save the proximity matrix to local file. Default: switched off. Computing proximity matrix is memory-consuming. 
 * `-n`, `--noimp`. Don't save variable importances to local file. Default: switched off.
 * `-B`, `--balance`. Balance the ratio of cases and controls in training data to 1. Default: switched off.
 * `-r`, `--trace`. Print debug information. Valid in single-thread mode. Default: switched off.
