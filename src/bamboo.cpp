@@ -1360,7 +1360,7 @@ void BAMBOO::PrintModelInfo(){
 			ntree += nt[j];
 		}
 		
-		cout << "The " << bam_list.size() << " models in [ " << dir << " ] includes: " << endl;
+		cout << "The " << bam_list.size() << " models in [ " << dir << " ] include: " << endl;
 		cout << ntree << " bamboos" << endl;
 		cout << nsnp_used << " markers" << endl;
 		if(ncont_used > 0){
@@ -5132,7 +5132,7 @@ void BAMBOO::ScanMultipleForest(){
 		}
 	}
 	
-	cout << "The " << bam_list.size() << " models in [ " << dir << " ] includes: " << endl;
+	cout << "The " << bam_list.size() << " models include: " << endl;
 	cout << ntree << " bamboos" << endl;
 	cout << nsnp_used << " markers" << endl;
 	if(ncont_used > 0){
