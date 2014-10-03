@@ -89,24 +89,24 @@ However, when we are using the outputed `rb.bam` to predict new data, the covari
 bamboo --bam rb --pred test --out rb
 ```
 
-Sometimes we prefer to use a subset of data in training or predicting. For example, all available genotype data are imputed and saved in the same genotype files; or all covariates are put in the same covariate files. We can use option `--trainid` to specify which individuals are going to be used in training, and use option `--testid` to specify those used in predicting. For example, we have data files `all_data.fam`, `all_data.bim`, `all_data.bed`, `all_data.con`, `all_data.cat` and two files `train_id_1.iid` and `test_id_1.iid`. Both of the `iid` files contain one column of individual IDs. They look like
+Sometimes we prefer to use a subset of data in training or predicting. For example, all available genotype data are imputed and saved in the same genotype files; or all covariates are put in the same covariate files. We can use option `--trainid` to specify which individuals are going to be used in training, and use option `--testid` to specify those used in predicting. For example, we have data files `all_data.fam`, `all_data.bim`, `all_data.bed`, `all_data.con`, `all_data.cat` and two files `train_id.iid` and `test_id.iid`. Both of the `iid` files contain one column of individual IDs. They look like
 ```
 CG-L02-61545
 CG-L02-03491
 CG-L02-67300
 ... ...
 ```
-The following command builds model with individuals listed in `train_id_1.iid` only
+The following command builds model with individuals listed in `train_id.iid` only
 ```
-bamboo --file all_data --cont all_data --cate all_data --trainid train_id_1 --out rb [...]
+bamboo --file all_data --cont all_data --cate all_data --trainid train_id --out rb [...]
 ```
-With the model (`rb.bam`) fitted by the command above, we can predict the data specified in `test_id_1.iid`
+With the model (`rb.bam`) fitted by the command above, we can predict the data specified in `test_id.iid`
 ```
-bamboo --bam rb --pred all_data --testid test_id_1
+bamboo --bam rb --pred all_data --testid test_id
 ```
 Or we can do the above in one line
 ```
-bamboo --file all_data --cont all_data --cate all_data --trainid train_id_1 --pred all_data --testid test_id_1 --out rb [...]
+bamboo --file all_data --cont all_data --cate all_data --trainid train_id --pred all_data --testid test_id --out rb [...]
 ```
 
 **NOTE** The file specified by the options `--trainid` and `--testid` must have extention `iid`.
