@@ -783,6 +783,7 @@ void BAMBOO::LoadTrainingData(){
 	map = (uint8*) mmap(0, file_size, PROT_READ, MAP_PRIVATE, fb, 0);
 	if(map == MAP_FAILED){
 		cout << "Error: Failed in memory mapping on the BED file " << file_bed.str().c_str() << endl;
+		cout << strerror(errno) << " (" << errno << ")" << endl;
 		close(fb);
 		exit(1);
 	}
