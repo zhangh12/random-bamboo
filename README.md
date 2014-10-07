@@ -74,7 +74,7 @@ If multiple `bam` files are save in a directory `./path`, we can use all of them
 ```
 bamboo --pred test --bam ./path --out rb
 ```
-`RB` will parse the meaning of `--bam` automatically. The feature is useful as we can run `RB` on multiple unparallelizable nodes, each with option `--nthread` enabled, and then all outputed `bam` files are used together in prediction.
+`RB` will parse the meaning of `--bam` automatically. The feature is useful as we can run `RB` on multiple unparallelizable nodes, each with option `--nthread` enabled and different random seed set by `--seed`, and then all outputed `bam` files are used together in prediction.
 
 **NOTE** The prediction results are saved in `prd` file.
 
