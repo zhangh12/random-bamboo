@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.4.0    |     October 3, 2014     //
+//    RANDOM BAMBOO    |     v0.4.1    |     October 8, 2014     //
 //---------------------------------------------------------------//
 //              (C) 2014 Han Zhang, Yifan Yang                   //
 //              GNU General Public License  V3                   //
@@ -25,7 +25,7 @@ int main(int argc, char **argv){
 	
 	cout << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
-	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      10/03/2014     |" << endl;
+	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      10/08/2014     |" << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
 	cout << "|                   (C) 2014 Han Zhang, Yifan Yang                 |" << endl;
 	cout << "|                   GNU General Public License, V3                 |" << endl;

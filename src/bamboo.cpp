@@ -1499,7 +1499,6 @@ BAMBOO::BAMBOO(const char *const input_path_out, const char *const input_path_te
 	
 	pred_from_trained_model = false;
 	pred_from_specified_model = true;
-	
 }
 
 //this constructor is used when --file is specified
@@ -3965,8 +3964,6 @@ void BAMBOO::LoadBamboo(){
 			ar & cate_unique & cate_code;
 			ar & bamboo;
 			
-			ntree = bamboo.size();
-			
 			has_cont = cont_var_used_in_forest.size() ? true : false;
 			has_cate = cate_var_used_in_forest.size() ? true : false;
 			
@@ -3976,7 +3973,7 @@ void BAMBOO::LoadBamboo(){
 		}
 	}
 	
-	cout << "The model with " << ntree << " bamboos is engaged from [ " << path_bam << " ] for prediction" << endl;
+	cout << "The model with " << bamboo.size() << " bamboos is engaged from [ " << path_bam << " ] for prediction" << endl;
 	cout << snp_used_in_forest.size() << " markers";
 	if(cont_var_id_used_in_forest.size() > 0){
 		cout << ", " << cont_var_used_in_forest.size() << " continuous covariate(s)";
@@ -5175,6 +5172,11 @@ void BAMBOO::PredictTestingSampleFromMultipleForest(){
 		if(ntree < nforest){
 			cout << "Only " << ntree << " bamboos are used in prediction" << endl;
 			nforest = ntree;
+		}else if(ntree > nforest){
+			ntree = nforest;
+			cout << "ntree is reset as " << ntree << endl;
+		}else{
+			;
 		}
 	}
 	
@@ -5279,7 +5281,18 @@ void BAMBOO::PredictTestingSampleFromSingleForest(){
 	LoadTestingData();
 	cout << "model engaged" << endl;
 	
-	ntree = bamboo.size();
+	if(ntree == -1){
+		ntree = bamboo.size();
+	}else{
+		if(ntree > bamboo.size()){
+			ntree = bamboo.size();
+			cout << "ntree is reset as " << ntree << endl;
+		}else if(ntree < bamboo.size()){
+			cout << "Only " << ntree << " bamboos are used in prediction" << endl;
+		}else{
+			;
+		}
+	}
 	
 	post_prob_case1_test = vector<double> (nsub_test, .0);
 	post_prob_case2_test = vector<double> (nsub_test, .0);
