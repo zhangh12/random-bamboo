@@ -641,17 +641,11 @@ void BAMBOO::LoadTrainingData(){
 //	file_bim.close();
 	
 	nsnp = 0;
-	
-	vector<BIM_INFO> vbi;
-	vbi.reserve(500000);
 	for(string s; getline(file_bim, s); ){//read by lines
 		istringstream sin(s);
-		int chr;
-		string rs, allele_name1, allele_name2;
+		string chr, rs, allele_name1, allele_name2;
 		int genetic_dist, base_pair_pos;
 		if(sin >> chr >> rs >> genetic_dist >> base_pair_pos >> allele_name1 >> allele_name2){//only six columns in .bim
-			BIM_INFO bi (nsnp, chr, base_pair_pos);
-			vbi.push_back(bi);
 			snp_name.push_back(rs);
 			++nsnp;
 //			if(base_pair_pos >= 0){//keep this SNP
@@ -666,32 +660,6 @@ void BAMBOO::LoadTrainingData(){
 		}
 	}
 	file_bim.close();
-	
-	if(neighbor > 0 && search_back > 0){
-		sort(vbi.begin(), vbi.end());
-		
-		neighborhood = vector<vector<int> > (nsnp);
-		#pragma omp parallel num_threads(nthread)
-		{
-			#pragma omp for
-			for(int i = 0; i < nsnp; ++i){
-				int snp_id = vbi[i].snp_id;
-				for(int k = 1; k <= neighbor; ++k){
-					if(i + k < nsnp){
-						if(vbi[i+k].chr == vbi[i].chr){
-							neighborhood[snp_id].push_back(vbi[i+k].snp_id);
-						}
-					}
-					
-					if(i - k >= 0){
-						if(vbi[i-k].chr == vbi[i].chr){
-							neighborhood[snp_id].push_back(vbi[i-k].snp_id);
-						}
-					}
-				}
-			}
-		}
-	}
 	
 	nvar = nsnp + ncont + ncate;
 	
@@ -1515,7 +1483,6 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	const int input_ntree, const int input_mtry, const int input_max_nleaf, 
 	const int input_min_leaf_size, const int input_imp_measure, const int input_seed, 
 	const int input_nthread, const double input_class_weight, const double input_cutoff, 
-	const int input_neighbor, const int input_search_back, 
 	const bool input_flip, const bool input_output_prox, const bool input_output_imp, 
 	const bool input_output_bamboo, const bool input_balance, const bool input_trace){
 	
@@ -1531,14 +1498,6 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	imp_measure = input_imp_measure;
 	nthread = input_nthread;
 	cutoff = input_cutoff;
-	
-	neighbor = input_neighbor;
-	search_back = input_search_back;
-	
-	if(neighbor == 0 || search_back == 0){
-		neighbor = 0;
-		search_back = 0;
-	}
 	
 	flip = input_flip;
 	output_prox = input_output_prox;
@@ -1691,7 +1650,6 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 		mtry = (int) sqrt(1.0 * (nsnp_specified + ncont + ncate));
 	}else{
 		if(mtry > nsnp_specified + ncont + ncate){
-			cout << mtry << "\t" << nsnp_specified << "\t" << ncont << "\t" << ncate << endl;
 			cout << "Error: Too large mtry" << endl;
 			exit(1);
 		}
@@ -1888,28 +1846,7 @@ void BAMBOO::Bootstrap(const int tree_id, drand48_data &buf, bitmat &y64_omp, bi
 }
 
 
-void BAMBOO::ExtractNeighbor(NODE &node, const vector<bool> &indicator_sel_snp_omp, vector<int> &sel_snp_id_omp){
-	
-	NODE *np = node.parent;
-	int nstep = search_back;
-	while(np && nstep){
-		NODE &nd = (*np);
-		if(nd.split_by == CODE_SNP){
-			vector<int> &nb = neighborhood[nd.split_snp_id];
-			for(int i = 0; i < nb.size(); ++i){
-				if(!indicator_sel_snp_omp[nb[i]]){
-					sel_snp_id_omp.push_back(nb[i]);
-				}
-			}
-		}
-		--nstep;
-		np = nd.parent;
-	}
-	
-}
-
-
-void BAMBOO::ShuffleSNP(drand48_data &buf, vector<int> &sel_snp_id_omp, vector<bool> &indicator_sel_snp_omp){
+void BAMBOO::ShuffleSNP(drand48_data &buf, vector<int> &sel_snp_id_omp){
 	
 	vector<int> snp_id = inc_snp_id;//index of snp id, initialized to snp ids specified by the user or 1:nsnp
 	
@@ -1930,10 +1867,8 @@ void BAMBOO::ShuffleSNP(drand48_data &buf, vector<int> &sel_snp_id_omp, vector<b
 		cout << "Error: debug ShuffleSNP" << endl;
 	}
 	
-	indicator_sel_snp_omp = vector<bool> (nsnp, false);
 	for(int i = 0; i < mtry; ++i){//selecte the top mtry SNPs to split a node
 		sel_snp_id_omp.push_back(snp_id[i]);
-		indicator_sel_snp_omp[snp_id[i]] = true;
 	}
 	sort(sel_snp_id_omp.begin(), sel_snp_id_omp.end());
 	
@@ -1941,7 +1876,7 @@ void BAMBOO::ShuffleSNP(drand48_data &buf, vector<int> &sel_snp_id_omp, vector<b
 
 
 void BAMBOO::ShuffleAllFeature(drand48_data &buf, vector<int> &sel_snp_id_omp, 
-	vector<int> &sel_cont_id_omp, vector<int> &sel_cate_id_omp, vector<bool> &indicator_sel_snp_omp){
+	vector<int> &sel_cont_id_omp, vector<int> &sel_cate_id_omp){
 	
 	vector<int> fid = inc_snp_id;//feature id. Index of snp id and other covariates' id
 	for(int i = nsnp; i < nvar; ++i){
@@ -1969,11 +1904,9 @@ void BAMBOO::ShuffleAllFeature(drand48_data &buf, vector<int> &sel_snp_id_omp,
 		sel_cate_id_omp.clear();
 	}
 	
-	indicator_sel_snp_omp = vector<bool> (nsnp, false);
 	for(int i = 0; i < mtry; ++i){//select SNPs from the top mtry features to split a node
 		if(fid[i] < nsnp){
 			sel_snp_id_omp.push_back(fid[i]);
-			indicator_sel_snp_omp[fid[i]] = true;
 		}else if(fid[i] < nsnp + ncont){
 			sel_cont_id_omp.push_back(fid[i]-nsnp);//select continuous features
 		}else{
@@ -1986,18 +1919,13 @@ void BAMBOO::ShuffleAllFeature(drand48_data &buf, vector<int> &sel_snp_id_omp,
 	
 }
 
-void BAMBOO::Shuffle(drand48_data &buf, NODE &node, vector<int> &sel_snp_id_omp, 
+void BAMBOO::Shuffle(drand48_data &buf, vector<int> &sel_snp_id_omp, 
 	vector<int> &sel_cont_id_omp, vector<int> &sel_cate_id_omp){
 	
-	vector<bool> indicator_sel_snp_omp;
 	if((has_cont && ncont > 0) || (has_cate && ncate > 0)){//covar 
-		ShuffleAllFeature(buf, sel_snp_id_omp, sel_cont_id_omp, sel_cate_id_omp, indicator_sel_snp_omp);//select snps and covariates as the candidate to be split
+		ShuffleAllFeature(buf, sel_snp_id_omp, sel_cont_id_omp, sel_cate_id_omp);//select snps and covariates as the candidate to be split
 	}else{
-		ShuffleSNP(buf, sel_snp_id_omp, indicator_sel_snp_omp);//select snps only
-	}
-	
-	if(neighbor > 0 && search_back > 0){
-		ExtractNeighbor(node, indicator_sel_snp_omp, sel_snp_id_omp);
+		ShuffleSNP(buf, sel_snp_id_omp);//select snps only
 	}
 	
 }
@@ -2025,7 +1953,7 @@ bool BAMBOO::SplitNode(NODE &node, const bitmat &y64_omp,
 	vector<int> sel_cont_id_omp;
 	vector<int> sel_cate_id_omp;
 	//choose features as candidates for node splitting
-	Shuffle(buf, node, sel_snp_id_omp, sel_cont_id_omp, sel_cate_id_omp);
+	Shuffle(buf, sel_snp_id_omp, sel_cont_id_omp, sel_cate_id_omp);
 	
 	if(false){
 		if(false){
@@ -2063,10 +1991,7 @@ bool BAMBOO::SplitNode(NODE &node, const bitmat &y64_omp,
 	double max_snp_stat = -1.0;
 	int split_snp_left_val = -1;
 	
-	if(!(neighbor > 0 && search_back > 0)){
-		assert(sel_snp_id_omp.size() + sel_cont_id_omp.size() + sel_cate_id_omp.size() == mtry);
-	}
-	
+	assert(sel_snp_id_omp.size() + sel_cont_id_omp.size() + sel_cate_id_omp.size() == mtry);
 	for(int i = 0; i < sel_snp_id_omp.size(); ++i){//evaluate the SNP: sel_snp_id_omp[i]
 		
 		int snp_id = sel_snp_id_omp[i];//snp id

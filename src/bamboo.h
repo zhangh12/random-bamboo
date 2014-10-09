@@ -455,24 +455,6 @@ struct FITTED_PROB{
 	
 };
 
-struct BIM_INFO{
-	
-	int snp_id;
-	int chr;
-	int base_pair_pos;
-	
-	bool operator < (const BIM_INFO &bi) const{
-		return (chr == bi.chr) ? (base_pair_pos < bi.base_pair_pos) : (chr < bi.chr);
-	}
-	
-	BIM_INFO(const int &s, const int &c, const int &b){
-		snp_id = s;
-		chr = c;
-		base_pair_pos = b;
-	}
-	
-};
-
 
 inline int BitCount(uint64 x){
 
@@ -541,9 +523,6 @@ class BAMBOO{
 		double class_weight;//weight assigned to case group
 		double cutoff;
 		
-		int neighbor;
-		int search_back;
-		
 		bool flip;
 		bool output_prox;
 		bool output_imp;
@@ -584,8 +563,6 @@ class BAMBOO{
 		vector<string> specified_trainid;
 		vector<string> specified_testid;
 		vector<string> specified_snpid;
-		
-		vector<vector<int> > neighborhood;
 		
 		vector<int> inc_snp_id;//include snp in training
 		
@@ -691,10 +668,9 @@ class BAMBOO{
 		void LoadTrainingData();
 		void CreateFile(char*, const char *const);
 		void Bootstrap(const int, drand48_data&, bitmat&, bitmat&, bitmat&, vector<vector<int> >&, vector<int>&, vector<int>&, vector<int>&, int&);
-		void ShuffleSNP(drand48_data&, vector<int>&, vector<bool>&);
-		void ShuffleAllFeature(drand48_data&, vector<int>&, vector<int>&, vector<int>&, vector<bool>&);
-		void ExtractNeighbor(NODE&, const vector<bool>&, vector<int>&);
-		void Shuffle(drand48_data&, NODE&, vector<int>&, vector<int>&, vector<int>&);
+		void ShuffleSNP(drand48_data&, vector<int>&);
+		void ShuffleAllFeature(drand48_data&, vector<int>&, vector<int>&, vector<int>&);
+		void Shuffle(drand48_data&, vector<int>&, vector<int>&, vector<int>&);
 		bool SplitNode(NODE&, const bitmat&, const bitmat&, const vector<int>&, const vector<vector<int> >&, drand48_data&);
 		void DestroyTree(vector<NODE*>&);
 		void GrowTree(drand48_data&, const int);
@@ -732,7 +708,6 @@ class BAMBOO{
 		BAMBOO(const char *const, const char *const, const char * const, const char * const, 
 		const char * const, const char *const, const char *const, const char *const, const int, 
 		const int, const int, const int, const int, const int, const int, const double, const double, 
-		const int, const int, 
 		const bool, const bool, const bool, const bool, const bool, const bool);
 		BAMBOO(const char *const, const char *const, const char *const, const char *const, const int, 
 		const int);
