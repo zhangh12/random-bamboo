@@ -43,19 +43,19 @@ bamboo --file train --cont train --cate train --out rb [...]
 > con <- read.table("train.con", header = TRUE, as.is = TRUE)
 > head(fam, 3)
             V1           V2 V3 V4 V5 V6
-1 CG-L03-81390 CG-L03-82390  0  0  2  2
-2 CG-L03-24262 CG-L03-22262  0  0  2  2
-3 CG-L03-69034 CG-L03-69734  0  0  2  2
+1 CG-L03-81789 CG-L03-82789  0  0  2  2
+2 CG-L03-24222 CG-L03-22222  0  0  2  2
+3 CG-L03-89134 CG-L03-89134  0  0  2  2
 > head(cat, 3)
        GWAS_ID AGE_CAT GENDER STUDY CIGDAY_CAT CIG_CAT          QUIT_CAT
-1 CG-L02-83435  61to65   MALE  PLCO     21to30 CURRENT CURRENT_NEVER_lt1
-2 CG-L02-90230  61to65   MALE  PLCO     21to30 CURRENT CURRENT_NEVER_lt1
+1 CG-L02-83435  51to55   MALE  PLCO     21to30 CURRENT CURRENT_NEVER_lt1
+2 CG-L02-90230  61to65   MALE  ATBC     31to40 CURRENT CURRENT_NEVER_lt1
 3 CG-L02-67314  66to70   MALE  PLCO     11to20 CURRENT CURRENT_NEVER_lt1
 > head(con, 3)
        GWAS_ID EAGLE_EV2     PLCO_EV4     PLCO_EV5 ATBC_EV2
-1 CG-L02-83435         0 -0.005957644  0.010665938        0
-2 CG-L02-90230         0 -0.017674167 -0.006934786        0
-3 CG-L02-67314         0  0.003294853 -0.010221391        0
+1 CG-L02-83435         0 -0.025857644  0.010665938        0
+2 CG-L02-90230         0 -0.017074167 -0.066994786        0
+3 CG-L02-67314         0  0.003454853 -0.150291391        0
 ```
 
 **NOTE** We can create dummy variables for categorical covariates and treat them as ordinal covariates. In that case, only `con` file is needed.
