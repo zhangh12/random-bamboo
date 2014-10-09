@@ -7,3 +7,4 @@
 ## BUG FIXES
 
 - fixed a bug that the individuals may not be aligned correctly when loading testing data; all previous versions should not be used in predicting new dataset
+- if all markers specified by `--snpid` are not included in the data, the program may crash; I fix it by printing a message before quiting if this happens 
