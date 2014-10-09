@@ -1,3 +1,10 @@
+# CHANGES IN Random Bamboo VERSION 0.5.x
+
+## MAJOR CHANGES
+
+- two experimental options, `--neighbor` and `--searchback` introduced in v0.4.x are removed, since they have no significant effect on improving power due to the multiple-comparison issue as expected; all other major/minor changes and bug fixes in v0.4.x are inherited
+
+
 # CHANGES IN Random Bamboo VERSION 0.4.x
 
 ## MAJOR CHANGES
