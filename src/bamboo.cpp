@@ -721,7 +721,7 @@ void BAMBOO::LoadTrainingData(){
 			}
 		}else{
 			nsnp_specified = specified_snpid.size();
-			cout << nsnp_specified << " SNPs in [ " << path_snpid << " ] are used in training" << endl;
+			cout << nsnp_specified << " markers in [ " << path_snpid << " ] are used in training" << endl;
 			
 			vector<bool> tmp (nsnp, false);
 			
@@ -744,6 +744,11 @@ void BAMBOO::LoadTrainingData(){
 				if(tmp[i]){
 					inc_snp_id.push_back(i);
 				}
+			}
+			
+			if(inc_snp_id.size() == 0){
+				cout << "Error: All markers in [ " << path_snpid << " ] are not found in the BED file" << endl;
+				exit(1);
 			}
 			
 			specified_snpid.clear();
@@ -1686,6 +1691,7 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 		mtry = (int) sqrt(1.0 * (nsnp_specified + ncont + ncate));
 	}else{
 		if(mtry > nsnp_specified + ncont + ncate){
+			cout << mtry << "\t" << nsnp_specified << "\t" << ncont << "\t" << ncate << endl;
 			cout << "Error: Too large mtry" << endl;
 			exit(1);
 		}
