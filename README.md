@@ -162,7 +162,7 @@ bamboo --bam ./path
 * `-r`, `--trace`. Print debug information. Valid in single-thread mode. Default: switched off.
 * `-N`, `--nobam`. Don't save trained model to local file. Default: switched off.
 * `-h`, `--help`. Print help information. Unimplemented. 
-* `-v`, `--version`. Print version information. Unimplemented. 
+* `-v`, `--version`. Print version information. 
 
 
 #Todo
