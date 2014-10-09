@@ -109,7 +109,7 @@ int main(int argc, char **argv){
 		//q
 		
 		int option_index = 0;
-		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:S:t:m:s:l:e:i:d:w:u:j:k:gxnBrNI", long_options, &option_index);
+		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:S:t:m:s:l:e:i:d:w:u:j:k:gxnBrNhv", long_options, &option_index);
 		
 		if(c == -1){
 			break;
@@ -243,6 +243,11 @@ int main(int argc, char **argv){
 			case 'N':
 				output_bamboo = false;
 				break;
+			case 'h':
+				//print help info here
+				return 0;
+			case 'v':
+				return 0;
 			default:
 				cout << "Error: Unknow options. Program terminates" << endl;
 				exit(1);
