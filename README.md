@@ -89,7 +89,7 @@ However, when we are using the outputed `rb.bam` to predict new data, the covari
 bamboo --bam rb --pred test --out rb
 ```
 
-Sometimes we prefer to use a subset of data in training or predicting. For example, all available genotype data are imputed and saved in the same genotype files; or all covariates are put in the same covariate files. We can use option `--trainid` to specify which individuals are going to be used in training, and use option `--testid` to specify those used in predicting. For example, we have data files `all_data.fam`, `all_data.bim`, `all_data.bed`, `all_data.con`, `all_data.cat` and two files `train_id.iid` and `test_id.iid`. Both of the `iid` files contain one column of individual IDs. They look like
+Sometimes we prefer to use a subset of data in training or predicting. For example, all available genotype data are imputed and saved in the same genotype files; or all covariates are put in the same covariate files. We can use option `--trainid` to specify which individuals are going to be used in training, and use option `--testid` to specify those used in predicting. For example, we have data files `all_data.fam`, `all_data.bim`, `all_data.bed`, `all_data.con`, `all_data.cat` and two files `train_id.iid` and `test_id.iid`. Both of the `iid` files contain one column of individual IDs and no header is needed. They look like
 ```
 CG-L02-61545
 CG-L02-03491
@@ -119,7 +119,7 @@ We can train a forest using specified markers only by using the option `--snpid`
 ```
 bamboo --file train --snpid snp [...]
 ```
-The `snp.sid` looks like
+The `snp.sid` doesn't have a header and looks like
 ```
 rs20112
 rs320078
