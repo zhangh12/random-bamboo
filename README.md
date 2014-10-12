@@ -146,6 +146,7 @@ bamboo --bam ./path
 * `-y`, `--trainid`. File name of individual IDs used in training model. The file, with extension `iid`, contains one column and no header. Character. If unspecified, all individuals in the datasets are used.
 * `-z`, `--testid`. File name of individual IDs used in prediction. If `--file` is specified, the individuals are predicted with model trained from the specified datasets. If `--bam` is specified, the individuals are predicted with specified model(s). The file, with extension `iid`, contains one column and no header. Character. If unspecified, all individuals in the datasets are used.
 * `-S`, `--snpid`. File name of SNPs' names used in training model. The file, with extension `sid`, contains one column and no header. Character. If unspecified, all SNPs in the training dataset are used.
+* `-j`, `--varid`. File name of variables' names used as candidates of all splits. The file, with extension `vid`, contains one column and no header. Character. If unspecified, all variables are used as candidates in split by chance.
 * `-t`, `--ntree`. Number of trees in the forest. Positive integer. Default: 1.
 * `-m`, `--mtry`. Number of candidate variables in determining best split in each node. Positive integer. Default: sqrt of total number of variables.
 * `-s`, `--seed`. Random seed. Positive integer. Default: 1.
