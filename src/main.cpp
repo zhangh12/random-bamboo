@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.5.0    |     October 9, 2014     //
+//    RANDOM BAMBOO    |     v0.5.1    |      April 16, 2015     //
 //---------------------------------------------------------------//
 //              (C) 2014 Han Zhang, Yifan Yang                   //
 //              GNU General Public License  V3                   //
@@ -15,6 +15,9 @@
 //         in v0.4.x. As expected, these two options don't help  //
 //         to improve the power due to multiple-comparison issue //
 //                                                               //
+//     April 16, 2015                                            //
+//     (1) add --swt to allow individual spcific sample weights  //
+//         in bootstrap                                          //
 ///////////////////////////////////////////////////////////////////
 
 
@@ -27,9 +30,9 @@ int main(int argc, char **argv){
 	
 	cout << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
-	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      10/09/2014     |" << endl;
+	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      04/16/2015     |" << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
-	cout << "|                   (C) 2014 Han Zhang, Yifan Yang                 |" << endl;
+	cout << "|                   (C) 2015 Han Zhang, Yifan Yang                 |" << endl;
 	cout << "|                   GNU General Public License, V3                 |" << endl;
 	cout << "+------------------------------------------------------------------+" << endl;
 	cout << "|     For documentation, citation and bug-report instructions:     |" << endl;
@@ -46,6 +49,8 @@ int main(int argc, char **argv){
 	char *trainid = NULL;//y
 	char *testid = NULL;//z
 	char *snpid = NULL;//S
+	char *varid = NULL;//j
+	char *samplewt = NULL;//W
 	
 	int ntree = 1;//t
 	int mtry = 0;//m
@@ -83,6 +88,7 @@ int main(int argc, char **argv){
 			{"trainid", 1, NULL, 'y'},
 			{"testid", 1, NULL, 'z'},
 			{"snpid", 1, NULL, 'S'},
+			{"varid", 1, NULL, 'j'},
 			{"ntree", 1, NULL, 't'},
 			{"mtry", 1, NULL, 'm'},
 			{"seed", 1, NULL, 's'},
@@ -91,6 +97,7 @@ int main(int argc, char **argv){
 			{"imp", 1, NULL, 'i'},
 			{"nthread", 1, NULL, 'd'},
 			{"classwt", 1, NULL, 'w'},
+			{"swt", 1, NULL, 'W'}, 
 			{"cutoff", 1, NULL, 'u'},
 			{"flip", 0, NULL, 'g'},
 			{"prox", 0, NULL, 'x'},
@@ -106,7 +113,7 @@ int main(int argc, char **argv){
 		//jkq
 		
 		int option_index = 0;
-		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:S:t:m:s:l:e:i:d:w:u:gxnBrNhv", long_options, &option_index);
+		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:S:j:t:m:s:l:e:i:d:w:W:u:gxnBrNhv", long_options, &option_index);
 		
 		if(c == -1){
 			break;
@@ -143,6 +150,9 @@ int main(int argc, char **argv){
 				break;
 			case 'S':
 				snpid = optarg;
+				break;
+			case 'j':
+				varid = optarg;
 				break;
 			case 't':
 				ntree = atoi(optarg);
@@ -200,6 +210,9 @@ int main(int argc, char **argv){
 					cout << "Error: The option --classwt must be a positive number" << endl;
 					return 0;
 				}
+				break;
+			case 'W':
+				samplewt = optarg;
 				break;
 			case 'u':
 				cutoff = atof(optarg);
@@ -292,9 +305,9 @@ int main(int argc, char **argv){
 		bb.PredictTestingSample();
 		return 0;
 	}else{//training model, and then predicting testing data if --pred is on
-		BAMBOO bb (file, out, cont, cate, pred, trainid, testid, snpid, ntree, mtry, max_nleaf, min_leaf_size, 
-		imp_measure, seed, nthread, class_weight, cutoff, flip, output_prox, output_imp, output_bamboo, 
-		balance, trace);
+		BAMBOO bb (file, out, cont, cate, pred, trainid, testid, snpid, samplewt, ntree, mtry, max_nleaf, 
+		min_leaf_size, imp_measure, seed, nthread, class_weight, cutoff, flip, output_prox, output_imp, 
+		output_bamboo, balance, trace);
 		bb.GrowForest();
 		bb.PredictTestingSample();
 		return 0;

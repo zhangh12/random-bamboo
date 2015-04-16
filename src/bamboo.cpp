@@ -157,6 +157,14 @@ BAMBOO::~BAMBOO(){
 		delete[] path_testid;
 	}
 	
+	if(path_snpid){
+		delete[] path_snpid;
+	}
+	
+	if(path_samplewt){
+		delete[] path_samplewt;
+	}
+	
 	delete[] path_err;
 	delete[] path_cof;
 	delete[] path_auc;
@@ -392,6 +400,34 @@ void BAMBOO::LoadTrainingData(){
 		}
 	}
 	
+	//loading individual ID with weight. Only the individual with a weight > 0 are used in training
+	vector<string> trainid_with_weight;
+	if(path_samplewt){
+		ifstream file_samplewt1(path_samplewt);
+		if(!file_samplewt1){
+			cout << "Error: Cannot open SWT file " << path_samplewt << endl;
+			exit(1);
+		}
+		
+		for(string s; getline(file_samplewt1, s); ){
+			istringstream sin(s);
+			string ind_id;
+			double swt;
+			if(sin >> ind_id >> swt){
+				if(swt > .0){
+					trainid_with_weight.push_back(ind_id);
+				}
+			}else{
+				cout << "Error: Invalid format in " << path_samplewt << endl;
+				exit(1);
+			}
+		}
+		file_samplewt1.close();
+		if(trainid_with_weight.size() > 0){
+			cout << "Unequal weights are loaded from [ " << path_samplewt << " ] for bootstrapping" << endl;
+		}
+	}
+	
 	//loading FAM file
 	ifstream file_fam(path_fam);
 	if(!file_fam){
@@ -422,8 +458,16 @@ void BAMBOO::LoadTrainingData(){
 							break;
 						}
 					}
-				}else{
-					in_spec = true;
+				}
+				
+				if(in_spec && path_samplewt){
+					in_spec = false;
+					for(int i = 0; i < trainid_with_weight.size(); ++i){
+						if(ind_id == trainid_with_weight[i]){
+							in_spec = true;
+							break;
+						}
+					}
 				}
 				
 				if(in_spec){
@@ -614,8 +658,6 @@ void BAMBOO::LoadTrainingData(){
 		}
 		
 	}
-	
-	
 	
 	//sample size and number of SNPs
 	
@@ -1104,7 +1146,60 @@ void BAMBOO::LoadTrainingData(){
 	
 	////////
 	
+	//loading sample weights, if available
+	samplewt = vector<double>(nsub, -1.0);
 	
+	if(has_samplewt){
+		ifstream file_samplewt(path_samplewt);
+		if(!file_samplewt){
+			cout << "Error: Cannot open SWT file " << path_samplewt << endl;
+			exit(1);
+		}
+		
+		for(string s; getline(file_samplewt, s); ){
+			istringstream sin(s);
+			string ind_id;
+			double swt;
+			if(sin >> ind_id >> swt){
+				for(int i = 0; i < nsub; ++i){
+					if(ind_id == individual_id[i]){
+						//when I load fam file before, I have forced individual_id to include samples from trainid.iid (if any),
+						// and samples from samplewt.swt (if any, with weights > 0)
+						//thus, the following condition statement should never be met
+						if(swt < .0){
+							cout << "Error: Sample weights are supposed to be zero or positive. The program is needed to be debugged" << endl;
+							exit(1);
+						}
+						samplewt[i] = swt;
+					}
+				}
+			}else{
+				cout << "Error: Invalid format in " << path_samplewt << endl;
+				exit(1);
+			}
+		}
+		file_samplewt.close();
+		
+		double sumwt = .0;
+		for(int i = 0; i < nsub; ++i){
+			if(samplewt[i] < .0){
+				cout << "Error: All training data should have a sample weight" << endl;
+				exit(1);
+			}else{
+				sumwt += samplewt[i];
+			}
+		}
+		for(int i = 0; i < nsub; ++i){
+			samplewt[i] /= sumwt;
+		}
+	}else{
+		samplewt = vector<double>(nsub, 1.0/nsub);
+	}
+	
+//	for(int i = 0; i < nsub; ++i){
+//		cout << individual_id[i] << "\t" << samplewt[i] << endl;
+//	}
+//	exit(1);
 	
 }
 
@@ -1480,6 +1575,7 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	const char * const input_path_cont, const char * const input_path_cate, 
 	const char *const input_path_test, const char *const input_path_trainid, 
 	const char *const input_path_testid, const char *const input_path_snpid, 
+	const char *const input_path_samplewt, 
 	const int input_ntree, const int input_mtry, const int input_max_nleaf, 
 	const int input_min_leaf_size, const int input_imp_measure, const int input_seed, 
 	const int input_nthread, const double input_class_weight, const double input_cutoff, 
@@ -1506,6 +1602,7 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	has_cont = input_path_cont ? true : false;
 	has_cate = input_path_cate ? true : false;
 	has_test = input_path_test ? true : false;
+	has_samplewt = input_path_samplewt ? true : false;
 	
 	balance = input_balance;
 	trace = input_trace;
@@ -1570,6 +1667,15 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 		strcat(path_snpid, ".sid");
 	}else{
 		path_snpid = NULL;
+	}
+	
+	if(input_path_samplewt){
+		path_samplewt = new char[strlen(input_path_samplewt)+5];
+		path_samplewt[0] = '\0';
+		strcat(path_samplewt, input_path_samplewt);
+		strcat(path_samplewt, ".swt");
+	}else{
+		path_samplewt = NULL;
 	}
 	
 	ComputeWordBits();
@@ -1746,6 +1852,62 @@ void BAMBOO::CreateFile(char *file, const char *const bfile){
 	
 }
 
+//Walker's alias method is modified from R's library by Yifan Yang
+//this function is used for sampling from specified distribution with replacement
+//p is the distribution to be sampled from
+//nans is sample size
+void BAMBOO::Walker_ProbSampleReplace(drand48_data &buf, const vector<double> &p, const int nans, vector<int> &ans){
+	
+	ans = vector<int>(nans, -1);
+	
+	int n = p.size();
+	vector<int> a(n);
+	
+    double *q, rU;
+    int i, j, k;
+    int *HL, *H, *L;
+
+    /* Create the alias tables.
+       The idea is that for HL[0] ... L-1 label the entries with q < 1
+       and L ... H[n-1] label those >= 1.
+       By rounding error we could have q[i] < 1. or > 1. for all entries.
+     */
+
+	/* Slow enough anyway not to risk overflow */
+	HL =(int *) calloc(n, sizeof(int));
+	q = (double *)calloc(n, sizeof(double));
+
+    H = HL - 1; L = HL + n;
+    for (i = 0; i < n; i++) {
+	q[i] = p[i] * n;
+	if (q[i] < 1.) *++H = i; else *--L = i;
+    }
+    if (H >= HL && L < HL + n) { /* So some q[i] are >= 1 and some < 1 */
+	for (k = 0; k < n - 1; k++) {
+	    i = HL[k];
+	    j = *L;
+	    a[i] = j;
+	    q[j] += q[i] - 1;
+	    if (q[j] < 1.) L++;
+	    if(L >= HL + n) break; /* now all are >= 1 */
+	}
+    }
+    for (i = 0; i < n; i++) q[i] += i;
+
+    /* generate sample */
+    for (i = 0; i < nans; i++) {
+    	double dr;
+    	drand48_r(&buf, &dr);
+	rU = dr * n;
+	k = (int) rU;
+	ans[i] = (rU < q[k]) ? k+1 : a[k]+1;
+		ans[i] -= 1;//added by Han to make id starting from 0 rather than 1
+    }
+
+	free(HL);
+	free(q);
+}
+
 //buf: used in random number generator
 //y64_omp, not_y64_omp: storing y after bootstrapping, expanded as 64-bit matrix to represent replicated samples
 //in_sample64_omp: indicate which element in y64_omp and not_y64_omp are included in the bootstrap samples, expanded and in bit-wise
@@ -1760,18 +1922,30 @@ void BAMBOO::Bootstrap(const int tree_id, drand48_data &buf, bitmat &y64_omp, bi
 	
 	vector<int> sel_id (nsub, -1);//storing ids of samples selected in bootstrap samples, with replication
 	id_cnt_omp = vector<int> (nsub, 0);//count, initialized as 0
-	for(int k = 0; k < nsub; ++k){
-		double dr;
-		drand48_r(&buf, &dr);
-		sel_id[k] = (int) (dr * nsub);
-		if(sel_id[k] < 0 || sel_id[k] >= nsub){
-			cout << "Error: in function Bootstrap" << endl;
-			exit(1);
+	
+	if(!has_samplewt){
+		for(int k = 0; k < nsub; ++k){
+			double dr;
+			drand48_r(&buf, &dr);
+			sel_id[k] = (int) (dr * nsub);
+			if(sel_id[k] < 0 || sel_id[k] >= nsub){
+				cout << "Error: in function Bootstrap" << endl;
+				exit(1);
+			}
+			
+			id_cnt_omp[sel_id[k]]++;
 		}
+	}else{
 		
-		id_cnt_omp[sel_id[k]]++;
-		
-		
+		Walker_ProbSampleReplace(buf, samplewt, nsub, sel_id);
+		for(int k = 0; k < nsub; ++k){
+			if(sel_id[k] < 0 || sel_id[k] >= nsub){
+				cout << sel_id[k] << "\t" << nsub << endl;
+				cout << "Error: in function Bootstrap" << endl;
+				exit(1);
+			}
+			id_cnt_omp[sel_id[k]]++;
+		}
 	}
 	
 	if(false){

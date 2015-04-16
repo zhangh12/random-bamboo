@@ -494,6 +494,7 @@ class BAMBOO{
 		char *path_trainid;
 		char *path_testid;
 		char *path_snpid;
+		char *path_samplewt;
 		
 		char *path_prox;
 		char *path_imp;
@@ -530,6 +531,7 @@ class BAMBOO{
 		bool has_cont;
 		bool has_cate;
 		bool has_test;
+		bool has_samplewt;
 		bool balance;
 		bool trace;
 		
@@ -600,6 +602,8 @@ class BAMBOO{
 		vector<vector<string> > xcate_test;
 		vector<vector<int> > xcate_int_test;
 		
+		vector<double> samplewt;
+		
 		bitmat oob_id64;//out-of-bag id, ntree x nblock
 		bitmat ib_id64;//in-bag id, ntree x nblock
 		
@@ -667,6 +671,7 @@ class BAMBOO{
 		void PrintPara();
 		void LoadTrainingData();
 		void CreateFile(char*, const char *const);
+		void Walker_ProbSampleReplace(drand48_data&, const vector<double>&, const int, vector<int>&);
 		void Bootstrap(const int, drand48_data&, bitmat&, bitmat&, bitmat&, vector<vector<int> >&, vector<int>&, vector<int>&, vector<int>&, int&);
 		void ShuffleSNP(drand48_data&, vector<int>&);
 		void ShuffleAllFeature(drand48_data&, vector<int>&, vector<int>&, vector<int>&);
@@ -706,9 +711,9 @@ class BAMBOO{
 		BAMBOO(){};
 		BAMBOO(const char *const, const int);
 		BAMBOO(const char *const, const char *const, const char * const, const char * const, 
-		const char * const, const char *const, const char *const, const char *const, const int, 
-		const int, const int, const int, const int, const int, const int, const double, const double, 
-		const bool, const bool, const bool, const bool, const bool, const bool);
+		const char * const, const char *const, const char *const, const char *const, const char *const, 
+		const int, const int, const int, const int, const int, const int, const int, const double, 
+		const double, const bool, const bool, const bool, const bool, const bool, const bool);
 		BAMBOO(const char *const, const char *const, const char *const, const char *const, const int, 
 		const int);
 		~BAMBOO();
