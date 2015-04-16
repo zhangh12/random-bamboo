@@ -2,6 +2,7 @@
 
 ## MAJOR CHANGES
 
+- a option, `--swt` is added to allow the users to specify sample weights for each sample. This is particular useful when the training dataset consists of samples from multiple studies with different sampling design. Only the individuals specified in both `--swt` (if any) and `--trainid` (if any) are involved in training. The individuals with zero weights are discarded, too
 - two experimental options, `--neighbor` and `--searchback` introduced in v0.4.x are removed, since they have no significant effect on improving power due to the multiple-comparison issue as expected; all other major/minor changes and bug fixes in v0.4.x are inherited
 
 
