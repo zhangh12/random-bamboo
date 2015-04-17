@@ -130,7 +130,7 @@ CG-L02-03491            1.2
 CG-L02-67300            4.7
 ...
 ```
-The individuals with positive weights in, e.g., `train.swt`, and those included in file specified by `--trainid` (if any) are involved in training. 
+The individuals with positive ***relative*** weights in, e.g., `train.swt`, and those included in file specified by `--trainid` (if any) are involved in training. 
 ```
 bamboo --file all_data --trainid train_id --swt train [...]
 ```
