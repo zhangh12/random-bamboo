@@ -192,6 +192,7 @@ bamboo --bam ./path
 * `-B`, `--balance`. Balance the ratio of cases and controls in training data to 1. Default: switched off.
 * `-r`, `--trace`. Print debug information. Valid in single-thread mode. Default: switched off.
 * `-N`, `--nobam`. Don't save trained model to local file. Default: switched off.
+* `-R`, `--selcovar`. Covariates are randomly selected as candidate splits, just like SNPs (not recommended). Default: switched off.
 * `-h`, `--help`. Print help information. Unimplemented. 
 * `-v`, `--version`. Print version information. 
 
