@@ -8,7 +8,7 @@
 
 ## BUG FIXES
 
-- fix a minor bug in function PredictTestingSampleFromMultipleForest(). It could lead to incorrect ntree
+- fix a minor bug in function `PredictTestingSampleFromMultipleForest()`. It could lead to incorrect ntree
 
 # CHANGES IN Random Bamboo VERSION 0.4.x
 
