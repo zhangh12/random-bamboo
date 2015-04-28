@@ -528,6 +528,7 @@ class BAMBOO{
 		bool output_prox;
 		bool output_imp;
 		bool output_bamboo;
+		bool keepcovar;
 		bool has_cont;
 		bool has_cate;
 		bool has_test;
@@ -675,6 +676,7 @@ class BAMBOO{
 		void Bootstrap(const int, drand48_data&, bitmat&, bitmat&, bitmat&, vector<vector<int> >&, vector<int>&, vector<int>&, vector<int>&, int&);
 		void ShuffleSNP(drand48_data&, vector<int>&);
 		void ShuffleAllFeature(drand48_data&, vector<int>&, vector<int>&, vector<int>&);
+		void ShuffleSNPKeepAllCovar(drand48_data&, vector<int>&, vector<int>&, vector<int>&);
 		void Shuffle(drand48_data&, vector<int>&, vector<int>&, vector<int>&);
 		bool SplitNode(NODE&, const bitmat&, const bitmat&, const vector<int>&, const vector<vector<int> >&, drand48_data&);
 		void DestroyTree(vector<NODE*>&);
@@ -713,7 +715,7 @@ class BAMBOO{
 		BAMBOO(const char *const, const char *const, const char * const, const char * const, 
 		const char * const, const char *const, const char *const, const char *const, const char *const, 
 		const int, const int, const int, const int, const int, const int, const int, const double, 
-		const double, const bool, const bool, const bool, const bool, const bool, const bool);
+		const double, const bool, const bool, const bool, const bool, const bool, const bool, const bool);
 		BAMBOO(const char *const, const char *const, const char *const, const char *const, const int, 
 		const int);
 		~BAMBOO();

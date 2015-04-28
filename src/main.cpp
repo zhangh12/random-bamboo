@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.5.2    |      April 20, 2015     //
+//    RANDOM BAMBOO    |     v0.5.3    |      April 24, 2015     //
 //---------------------------------------------------------------//
-//              (C) 2014 Han Zhang, Yifan Yang                   //
+//              (C) 2015 Han Zhang, Yifan Yang                   //
 //              GNU General Public License  V3                   //
 //---------------------------------------------------------------//
 //   For documentation, citation and bug-report instructions:    //
@@ -23,6 +23,18 @@
 //     (1) fix a minor bug in function                           //
 //         PredictTestingSampleFromMultipleForest(). It leads to //
 //         incorrect ntree                                       //
+//                                                               //
+//     April 24, 2015                                            //
+//     (1) add --selcovar to randomly selecte covarites as       //
+//         candidate splits for each node. This is the default   //
+//         setting in previous version. By adding this option,   //
+//         random bamboo now keeps all covariates as candidate   //
+//         splits for all nodes. This is reasonable since        //
+//         covariates are considered having strong effects on    //
+//         the outcome. New option --selcovar alow the users     //
+//         to treat covariates equally to SNPs, which is not     //
+//         recommended though                                    //
+//                                                               //
 ///////////////////////////////////////////////////////////////////
 
 
@@ -35,7 +47,7 @@ int main(int argc, char **argv){
 	
 	cout << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
-	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      04/20/2015     |" << endl;
+	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      04/24/2015     |" << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
 	cout << "|                   (C) 2015 Han Zhang, Yifan Yang                 |" << endl;
 	cout << "|                   GNU General Public License, V3                 |" << endl;
@@ -74,6 +86,7 @@ int main(int argc, char **argv){
 	bool balance = false;//B //if it is turned on and class_weight is not set (< .0), then class_weight by balancing the data (according to case/control ratio in data)
 	bool trace = false;//r
 	bool output_bamboo = true;//N
+	bool keepcovar = true;//k
 	
 	bool file_spec = false;
 	bool out_spec = false;
@@ -110,15 +123,16 @@ int main(int argc, char **argv){
 			{"balance", 0, NULL, 'B'},
 			{"trace", 0, NULL, 'r'},
 			{"nobam", 0, NULL, 'N'},
+			{"selcovar", 0, NULL, 'R'}, 
 			{"help", 0, NULL, 'h'},
 			{"version", 0, NULL, 'v'},
 			{0, 0, 0, 0}
 		};
 		
-		//jkq
+		//kq
 		
 		int option_index = 0;
-		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:S:j:t:m:s:l:e:i:d:w:W:u:gxnBrNhv", long_options, &option_index);
+		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:S:j:t:m:s:l:e:i:d:w:W:u:gxnBrNRhv", long_options, &option_index);
 		
 		if(c == -1){
 			break;
@@ -244,6 +258,9 @@ int main(int argc, char **argv){
 			case 'N':
 				output_bamboo = false;
 				break;
+			case 'R':
+				keepcovar = false;
+				break;
 			case 'h':
 				//print help info here
 				return 0;
@@ -312,7 +329,7 @@ int main(int argc, char **argv){
 	}else{//training model, and then predicting testing data if --pred is on
 		BAMBOO bb (file, out, cont, cate, pred, trainid, testid, snpid, samplewt, ntree, mtry, max_nleaf, 
 		min_leaf_size, imp_measure, seed, nthread, class_weight, cutoff, flip, output_prox, output_imp, 
-		output_bamboo, balance, trace);
+		output_bamboo, keepcovar, balance, trace);
 		bb.GrowForest();
 		bb.PredictTestingSample();
 		return 0;

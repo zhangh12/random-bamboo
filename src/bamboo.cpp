@@ -1580,7 +1580,8 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	const int input_min_leaf_size, const int input_imp_measure, const int input_seed, 
 	const int input_nthread, const double input_class_weight, const double input_cutoff, 
 	const bool input_flip, const bool input_output_prox, const bool input_output_imp, 
-	const bool input_output_bamboo, const bool input_balance, const bool input_trace){
+	const bool input_output_bamboo, const bool input_keepcovar, 
+	const bool input_balance, const bool input_trace){
 	
 	time_t start_time;
 	time(&start_time);
@@ -1603,6 +1604,8 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	has_cate = input_path_cate ? true : false;
 	has_test = input_path_test ? true : false;
 	has_samplewt = input_path_samplewt ? true : false;
+		
+	keepcovar = (input_keepcovar && (has_cont || has_cate)) ? true : false;
 	
 	balance = input_balance;
 	trace = input_trace;
@@ -2019,7 +2022,6 @@ void BAMBOO::Bootstrap(const int tree_id, drand48_data &buf, bitmat &y64_omp, bi
 	
 }
 
-
 void BAMBOO::ShuffleSNP(drand48_data &buf, vector<int> &sel_snp_id_omp){
 	
 	vector<int> snp_id = inc_snp_id;//index of snp id, initialized to snp ids specified by the user or 1:nsnp
@@ -2047,7 +2049,6 @@ void BAMBOO::ShuffleSNP(drand48_data &buf, vector<int> &sel_snp_id_omp){
 	sort(sel_snp_id_omp.begin(), sel_snp_id_omp.end());
 	
 }
-
 
 void BAMBOO::ShuffleAllFeature(drand48_data &buf, vector<int> &sel_snp_id_omp, 
 	vector<int> &sel_cont_id_omp, vector<int> &sel_cate_id_omp){
@@ -2093,11 +2094,53 @@ void BAMBOO::ShuffleAllFeature(drand48_data &buf, vector<int> &sel_snp_id_omp,
 	
 }
 
+void BAMBOO::ShuffleSNPKeepAllCovar(drand48_data &buf, vector<int> &sel_snp_id_omp, 
+	vector<int> &sel_cont_id_omp, vector<int> &sel_cate_id_omp){
+	
+	vector<int> snp_id = inc_snp_id;//index of snp id, initialized to snp ids specified by the user or 1:nsnp
+	
+	for(int k = snp_id.size() - 1; k > 0; --k){
+		long int li;
+		lrand48_r(&buf, &li);
+		int j = li % (k + 1);
+		int s = snp_id[j];
+		snp_id[j] = snp_id[k];
+		snp_id[k] = s;
+	}
+	
+	if(!sel_snp_id_omp.empty()){
+		sel_snp_id_omp.clear();
+	}
+	
+	if(mtry > inc_snp_id.size()){
+		cout << "Error: debug ShuffleSNP" << endl;
+	}
+	
+	for(int i = 0; i < mtry - ncate - ncont; ++i){//selecte the top mtry-ncate-ncont SNPs to split a node
+		sel_snp_id_omp.push_back(snp_id[i]);
+	}
+	for(int i = 0; i < ncate; ++i){//all categorical covariates included
+		sel_cate_id_omp.push_back(i);
+	}
+	for(int i = 0; i < ncont; ++i){//all continuous covariates included
+		sel_cont_id_omp.push_back(i);
+	}
+	
+	sort(sel_snp_id_omp.begin(), sel_snp_id_omp.end());
+	sort(sel_cont_id_omp.begin(), sel_cont_id_omp.end());
+	sort(sel_cate_id_omp.begin(), sel_cate_id_omp.end());
+	
+}
+
 void BAMBOO::Shuffle(drand48_data &buf, vector<int> &sel_snp_id_omp, 
 	vector<int> &sel_cont_id_omp, vector<int> &sel_cate_id_omp){
 	
 	if((has_cont && ncont > 0) || (has_cate && ncate > 0)){//covar 
-		ShuffleAllFeature(buf, sel_snp_id_omp, sel_cont_id_omp, sel_cate_id_omp);//select snps and covariates as the candidate to be split
+		if(keepcovar){
+			ShuffleSNPKeepAllCovar(buf, sel_snp_id_omp, sel_cont_id_omp, sel_cate_id_omp);//all covariates are used as candidate split for all nodes
+		}else{
+			ShuffleAllFeature(buf, sel_snp_id_omp, sel_cont_id_omp, sel_cate_id_omp);//select snps and covariates as the candidate to be split
+		}
 	}else{
 		ShuffleSNP(buf, sel_snp_id_omp);//select snps only
 	}
