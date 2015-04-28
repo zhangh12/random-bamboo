@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.5.1    |      April 16, 2015     //
+//    RANDOM BAMBOO    |     v0.5.2    |      April 20, 2015     //
 //---------------------------------------------------------------//
 //              (C) 2014 Han Zhang, Yifan Yang                   //
 //              GNU General Public License  V3                   //
@@ -18,6 +18,11 @@
 //     April 16, 2015                                            //
 //     (1) add --swt to allow individual spcific sample weights  //
 //         in bootstrap                                          //
+//                                                               //
+//     April 20, 2015                                            //
+//     (1) fix a minor bug in function                           //
+//         PredictTestingSampleFromMultipleForest(). It leads to //
+//         incorrect ntree                                       //
 ///////////////////////////////////////////////////////////////////
 
 
@@ -30,7 +35,7 @@ int main(int argc, char **argv){
 	
 	cout << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
-	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      04/16/2015     |" << endl;
+	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      04/20/2015     |" << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
 	cout << "|                   (C) 2015 Han Zhang, Yifan Yang                 |" << endl;
 	cout << "|                   GNU General Public License, V3                 |" << endl;

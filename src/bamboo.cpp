@@ -5271,19 +5271,6 @@ void BAMBOO::PredictTestingSampleFromMultipleForest(){
 	vector<vector<double> > tmp1_omp (nthread, vector<double> (nsub_test, .0));
 	
 	int nforest = bam_list.size();
-	if(ntree == -1){
-		ntree = nforest;
-	}else{
-		if(ntree < nforest){
-			cout << "Only " << ntree << " bamboos are used in prediction" << endl;
-			nforest = ntree;
-		}else if(ntree > nforest){
-			ntree = nforest;
-			cout << "ntree is reset as " << ntree << endl;
-		}else{
-			;
-		}
-	}
 	
 	#pragma omp parallel num_threads(nthread)
 	{
