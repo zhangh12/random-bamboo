@@ -1759,9 +1759,14 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 		mtry = (int) sqrt(1.0 * (nsnp_specified + ncont + ncate));
 	}else{
 		if(mtry > nsnp_specified + ncont + ncate){
-			cout << "Error: Too large mtry" << endl;
+			cout << "Error: mtry is too large" << endl;
 			exit(1);
 		}
+	}
+	
+	if(keepcovar && mtry < ncont + ncate){
+		cout << "Error: mtry is too small. Try --selcovar" << endl;
+		exit(1);
 	}
 	
 	time_t data_loaded_time;
@@ -2112,7 +2117,7 @@ void BAMBOO::ShuffleSNPKeepAllCovar(drand48_data &buf, vector<int> &sel_snp_id_o
 		sel_snp_id_omp.clear();
 	}
 	
-	if(mtry > inc_snp_id.size()){
+	if(mtry > inc_snp_id.size() + ncate + ncont){
 		cout << "Error: debug ShuffleSNP" << endl;
 	}
 	
