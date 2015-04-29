@@ -193,6 +193,7 @@ bamboo --bam ./path
 * `-r`, `--trace`. Print debug information. Valid in single-thread mode. Default: switched off.
 * `-N`, `--nobam`. Don't save trained model to local file. Default: switched off.
 * `-R`, `--selcovar`. Covariates are randomly selected as candidate splits, just like SNPs (not recommended). Default: switched off.
+* `-T`, `--tidy`. Mute output except `bam` and `prd` file. Default: switched off.
 * `-h`, `--help`. Print help information. Unimplemented. 
 * `-v`, `--version`. Print version information. 
 
@@ -200,9 +201,9 @@ bamboo --bam ./path
 #Todo
 
 - [ ] allow stratified sampling (e.g., STUDY)
-- [ ] allow specifying must-included variables (e.g., STUDY, AGE, etc.)
+- [x] allow specifying must-included variables (e.g., STUDY, AGE, etc.)
 - [ ] optimize memory and speed further
-- [ ] mute output except `bam` file
+- [x] mute output except `bam` file
 - [ ] print data information (e.g., MAF, etc.)
 - [ ] filter genotypes by MAF
 - [ ] test AUC function with tie
