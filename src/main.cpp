@@ -35,6 +35,12 @@
 //         to treat covariates equally to SNPs, which is not     //
 //         recommended though                                    //
 //                                                               //
+//     April 29, 2015                                            //
+//     (1) add --tidy to mute output files except for bam and    //
+//         prd files                                             //
+//     (2) fix a minor bug when --pred and --nobam are used      //
+//         together                                              //
+//                                                               //
 ///////////////////////////////////////////////////////////////////
 
 
