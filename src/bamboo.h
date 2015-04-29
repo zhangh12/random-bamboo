@@ -529,6 +529,7 @@ class BAMBOO{
 		bool output_imp;
 		bool output_bamboo;
 		bool keepcovar;
+		bool tidy;
 		bool has_cont;
 		bool has_cate;
 		bool has_test;
@@ -715,7 +716,8 @@ class BAMBOO{
 		BAMBOO(const char *const, const char *const, const char * const, const char * const, 
 		const char * const, const char *const, const char *const, const char *const, const char *const, 
 		const int, const int, const int, const int, const int, const int, const int, const double, 
-		const double, const bool, const bool, const bool, const bool, const bool, const bool, const bool);
+		const double, const bool, const bool, const bool, const bool, const bool, const bool, 
+		const bool, const bool);
 		BAMBOO(const char *const, const char *const, const char *const, const char *const, const int, 
 		const int);
 		~BAMBOO();

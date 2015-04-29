@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////
-//    RANDOM BAMBOO    |     v0.5.4    |      April 28, 2015     //
+//    RANDOM BAMBOO    |     v0.5.5    |      April 29, 2015     //
 //---------------------------------------------------------------//
 //              (C) 2015 Han Zhang, Yifan Yang                   //
 //              GNU General Public License  V3                   //
@@ -47,7 +47,7 @@ int main(int argc, char **argv){
 	
 	cout << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
-	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      04/28/2015     |" << endl;
+	cout << "|     Random Bamboo      |     " << setw(8) << RANDOM_BAMBOO_VERSION << "      |      04/29/2015     |" << endl;
 	cout << "+------------------------+-------------------+---------------------+" << endl;
 	cout << "|                   (C) 2015 Han Zhang, Yifan Yang                 |" << endl;
 	cout << "|                   GNU General Public License, V3                 |" << endl;
@@ -87,6 +87,7 @@ int main(int argc, char **argv){
 	bool trace = false;//r
 	bool output_bamboo = true;//N
 	bool keepcovar = true;//k
+	bool tidy = false;//T
 	
 	bool file_spec = false;
 	bool out_spec = false;
@@ -124,6 +125,7 @@ int main(int argc, char **argv){
 			{"trace", 0, NULL, 'r'},
 			{"nobam", 0, NULL, 'N'},
 			{"selcovar", 0, NULL, 'R'}, 
+			{"tidy", 0, NULL, 'T'}, 
 			{"help", 0, NULL, 'h'},
 			{"version", 0, NULL, 'v'},
 			{0, 0, 0, 0}
@@ -132,7 +134,7 @@ int main(int argc, char **argv){
 		//kq
 		
 		int option_index = 0;
-		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:S:j:t:m:s:l:e:i:d:w:W:u:gxnBrNRhv", long_options, &option_index);
+		c = getopt_long(argc, argv, "f:o:c:a:p:b:y:z:S:j:t:m:s:l:e:i:d:w:W:u:gxnBrNRThv", long_options, &option_index);
 		
 		if(c == -1){
 			break;
@@ -261,6 +263,9 @@ int main(int argc, char **argv){
 			case 'R':
 				keepcovar = false;
 				break;
+			case 'T':
+				tidy = true;
+				break;
 			case 'h':
 				//print help info here
 				return 0;
@@ -329,7 +334,7 @@ int main(int argc, char **argv){
 	}else{//training model, and then predicting testing data if --pred is on
 		BAMBOO bb (file, out, cont, cate, pred, trainid, testid, snpid, samplewt, ntree, mtry, max_nleaf, 
 		min_leaf_size, imp_measure, seed, nthread, class_weight, cutoff, flip, output_prox, output_imp, 
-		output_bamboo, keepcovar, balance, trace);
+		output_bamboo, keepcovar, tidy, balance, trace);
 		bb.GrowForest();
 		bb.PredictTestingSample();
 		return 0;

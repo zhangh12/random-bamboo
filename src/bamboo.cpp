@@ -1580,7 +1580,7 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	const int input_min_leaf_size, const int input_imp_measure, const int input_seed, 
 	const int input_nthread, const double input_class_weight, const double input_cutoff, 
 	const bool input_flip, const bool input_output_prox, const bool input_output_imp, 
-	const bool input_output_bamboo, const bool input_keepcovar, 
+	const bool input_output_bamboo, const bool input_keepcovar, const bool input_tidy, 
 	const bool input_balance, const bool input_trace){
 	
 	time_t start_time;
@@ -1606,6 +1606,7 @@ BAMBOO::BAMBOO(const char *const input_path_plink, const char *const input_path_
 	has_samplewt = input_path_samplewt ? true : false;
 		
 	keepcovar = (input_keepcovar && (has_cont || has_cate)) ? true : false;
+	tidy = input_tidy;
 	
 	balance = input_balance;
 	trace = input_trace;
@@ -3237,9 +3238,6 @@ void BAMBOO::GrowForestMultiProc(const time_t start){
 
 void BAMBOO::SaveBamboo(){
 	
-	if(!output_bamboo){
-		return;
-	}
 	
 	//figure out which variables are involved in the final forest
 	//this list will be useful to loading test dataset for prediction
@@ -3270,6 +3268,10 @@ void BAMBOO::SaveBamboo(){
 				break;
 			}
 		}
+	}
+	
+	if(!output_bamboo){
+		return;
 	}
 	
 	{//save forest to local file
@@ -3561,7 +3563,9 @@ void BAMBOO::ComputeOOBError(){
 		}
 	}
 	
-	WriteOOBError();
+	if(!tidy){
+		WriteOOBError();
+	}
 	
 }
 
@@ -3640,7 +3644,9 @@ void BAMBOO::ComputeOOBAUC(){
 		auc += .5 * abs(fp[i-1]-fp[i]) * (tp[i] + tp[i-1]);
 	}
 	
-	WriteOOBAUC();
+	if(!tidy){
+		WriteOOBAUC();
+	}
 	
 }
 
@@ -3689,7 +3695,9 @@ void BAMBOO::ComputeConfusionMatrix(){
 		}
 	}
 	
-	WriteConfusionMatrix();
+	if(!tidy){
+		WriteConfusionMatrix();
+	}
 	
 }
 
@@ -4043,7 +4051,9 @@ void BAMBOO::ComputeImportance(){
 	
 	ComputePermutationImportance();
 	
-	WriteImportance();
+	if(!tidy){
+		WriteImportance();
+	}
 	
 }
 
@@ -4119,6 +4129,8 @@ void BAMBOO::LoadBamboo(){
 			
 			has_cont = cont_var_used_in_forest.size() ? true : false;
 			has_cate = cate_var_used_in_forest.size() ? true : false;
+				
+			cout << "The model with " << bamboo.size() << " bamboos is engaged from [ " << path_bam << " ] for prediction" << endl;
 			
 		}else{
 			cout << "Error: Cannot load bamboo for prediction" << endl;
@@ -4126,7 +4138,6 @@ void BAMBOO::LoadBamboo(){
 		}
 	}
 	
-	cout << "The model with " << bamboo.size() << " bamboos is engaged from [ " << path_bam << " ] for prediction" << endl;
 	cout << snp_used_in_forest.size() << " markers";
 	if(cont_var_id_used_in_forest.size() > 0){
 		cout << ", " << cont_var_used_in_forest.size() << " continuous covariate(s)";
